@@ -136,6 +136,8 @@ typedef struct cp_info {
     cp_info();
     cp_info(const cp_info& cpy);
     cp_info & operator= (const cp_info& rs);
+    void claimInfoMemory();
+    void relinquishInfoMemory();
     ~cp_info();
 }cp_info;
 
@@ -145,6 +147,8 @@ typedef struct attribute_info
     u2  attribute_name_index;
     u4  attribute_length;
     u1  *info;
+    //Flag to indicate info memory's ownership
+    bool _ownsInfoMemory;
     attribute_info();
     attribute_info(const attribute_info& cpy);
     attribute_info & operator= (const attribute_info& rs);
@@ -309,7 +313,7 @@ typedef struct CONSTANT_String_info
     {
         return sizeof(u2);
     }
-
+    
 }CONSTANT_String_info;
 
 typedef struct CONSTANT_Integer_info
@@ -503,15 +507,15 @@ typedef struct __attribute__((__packed__)) Code_attribute
 
 
 /*typedef union stack_map_frame
-{
-    same_frame,
-    same_locals_1_stack_item_frame,
-    same_locals_1_stack_item_frame_extended,
-    chop_frame,
-    same_frame_extended,
-    append_frame,
-    full_frame
-}stack_map_frame;*/
+ {
+ same_frame,
+ same_locals_1_stack_item_frame,
+ same_locals_1_stack_item_frame_extended,
+ chop_frame,
+ same_frame_extended,
+ append_frame,
+ full_frame
+ }stack_map_frame;*/
 
 typedef struct StackMapTable_attribute
 {

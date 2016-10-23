@@ -97,70 +97,70 @@ cp_info::cp_info(const cp_info& cpy)
     switch (tag) {
         case CONSTANT_Class:
             info = (void *)new CONSTANT_Class_info(
-                            *((CONSTANT_Class_info *)cpy.info));
+                                                   *((CONSTANT_Class_info *)cpy.info));
             break;
         case CONSTANT_Fieldref:
             info = (void *)new CONSTANT_Fieldref_info(
-                            *((CONSTANT_Fieldref_info *)cpy.info));
+                                                      *((CONSTANT_Fieldref_info *)cpy.info));
             break;
         case CONSTANT_Methodref:
             info = (void *)new CONSTANT_Methodref_info(
-                            *((CONSTANT_Methodref_info *)cpy.info));
+                                                       *((CONSTANT_Methodref_info *)cpy.info));
             break;
         case CONSTANT_InterfaceMethodref:
             info =
             (void *)new CONSTANT_InterfaceMethodref_info(
-                            *((CONSTANT_InterfaceMethodref_info *)cpy.info));
+                                                         *((CONSTANT_InterfaceMethodref_info *)cpy.info));
             break;
         case CONSTANT_String:
             info =
             (void *)new CONSTANT_String_info(
-                            *((CONSTANT_String_info *)cpy.info));
+                                             *((CONSTANT_String_info *)cpy.info));
             break;
         case CONSTANT_Integer:
             info =
             (void *)new CONSTANT_Integer_info(
-                            *((CONSTANT_Integer_info *)cpy.info));
+                                              *((CONSTANT_Integer_info *)cpy.info));
             break;
         case CONSTANT_Float:
             info =
             (void *)new CONSTANT_Float_info(
-                            *((CONSTANT_Float_info *)cpy.info));
+                                            *((CONSTANT_Float_info *)cpy.info));
             break;
         case CONSTANT_Long:
             info =
             (void *)new CONSTANT_Long_info(
-                            *((CONSTANT_Long_info *)cpy.info));
+                                           *((CONSTANT_Long_info *)cpy.info));
             break;
         case CONSTANT_Double:
             info =
             (void *)new CONSTANT_Double_info(
-                            *((CONSTANT_Double_info *)cpy.info));
+                                             *((CONSTANT_Double_info *)cpy.info));
             break;
         case CONSTANT_NameAndType:
             info =
             (void *)new CONSTANT_NameAndType_info(
-                            *((CONSTANT_NameAndType_info *)cpy.info));
+                                                  *((CONSTANT_NameAndType_info *)cpy.info));
             break;
         case CONSTANT_Utf8:
             info =
             (void *)new CONSTANT_Utf8_info(
-                            *((CONSTANT_Utf8_info *)cpy.info));
+                                           *((CONSTANT_Utf8_info *)cpy.info));
             break;
         case CONSTANT_MethodHandle:
             info =
             (void *)new CONSTANT_MethodHandle_info(
-                            *((CONSTANT_MethodHandle_info *)cpy.info));
+                                                   *((CONSTANT_MethodHandle_info *)cpy.info));
             break;
         case CONSTANT_MethodType:
             info =
             (void *)new CONSTANT_MethodType_info(
-                            *((CONSTANT_MethodType_info *)cpy.info));
+                                                 *((CONSTANT_MethodType_info *)cpy.info));
             break;
         case CONSTANT_InvokeDynamic:
             info =
             (void *)new CONSTANT_InvokeDynamic_info(
-                            *((CONSTANT_InvokeDynamic_info *)cpy.info));
+                                                    *((CONSTANT_InvokeDynamic_info *)cpy.info));
             break;
         default:
             throw ConstantPool_TagNotRecognized();
@@ -249,6 +249,14 @@ cp_info & cp_info::operator= (const cp_info& cpy)
     }
     return *this;
 }
+void cp_info::claimInfoMemory()
+{
+    _ownsInfoMemory = true;
+}
+void cp_info::relinquishInfoMemory()
+{
+    _ownsInfoMemory = false;
+}
 cp_info::~cp_info(){
     if(info == NULL || !_ownsInfoMemory)
         return;
@@ -335,7 +343,7 @@ CONSTANT_Fieldref_info::CONSTANT_Fieldref_info(unsigned char *bytecode)
     name_and_type_index = u2(bytecode+2);
 }
 CONSTANT_Fieldref_info::CONSTANT_Fieldref_info(
-                                            const CONSTANT_Fieldref_info& cpy)
+                                               const CONSTANT_Fieldref_info& cpy)
 {
     class_index         = cpy.class_index;
     name_and_type_index = cpy.name_and_type_index;
@@ -353,7 +361,7 @@ CONSTANT_Methodref_info::CONSTANT_Methodref_info(unsigned char *bytecode)
     name_and_type_index = u2(bytecode+2);
 }
 CONSTANT_Methodref_info::CONSTANT_Methodref_info(
-                                    const CONSTANT_Methodref_info& cpy)
+                                                 const CONSTANT_Methodref_info& cpy)
 {
     class_index         = cpy.class_index;
     name_and_type_index = cpy.name_and_type_index;
@@ -366,13 +374,13 @@ void CONSTANT_Methodref_info::writeToFile(void *file_ptr)
 #pragma mark -
 
 CONSTANT_InterfaceMethodref_info::
-    CONSTANT_InterfaceMethodref_info(unsigned char *bytecode)
+CONSTANT_InterfaceMethodref_info(unsigned char *bytecode)
 {
     class_index = u2(bytecode);
     name_and_type_index = u2(bytecode+2);
 }
 CONSTANT_InterfaceMethodref_info::CONSTANT_InterfaceMethodref_info(
-                                    const CONSTANT_InterfaceMethodref_info& cpy)
+                                                                   const CONSTANT_InterfaceMethodref_info& cpy)
 {
     class_index         = cpy.class_index;
     name_and_type_index = cpy.name_and_type_index;
@@ -470,7 +478,7 @@ CONSTANT_NameAndType_info::CONSTANT_NameAndType_info(unsigned char *bytecode)
     descriptor_index    = u2(bytecode+2);
 }
 CONSTANT_NameAndType_info::CONSTANT_NameAndType_info(const
-                                    CONSTANT_NameAndType_info& cpy)
+                                                     CONSTANT_NameAndType_info& cpy)
 {
     name_index          =cpy.name_index;
     descriptor_index    =cpy.descriptor_index;
@@ -542,7 +550,7 @@ CONSTANT_MethodHandle_info::CONSTANT_MethodHandle_info(unsigned char *bytecode)
     reference_index = u2(bytecode+1);
 }
 CONSTANT_MethodHandle_info::CONSTANT_MethodHandle_info(
-                                    const CONSTANT_MethodHandle_info &cpy)
+                                                       const CONSTANT_MethodHandle_info &cpy)
 {
     reference_kind  = cpy.reference_kind;
     reference_index = cpy.reference_index;
@@ -558,7 +566,7 @@ CONSTANT_MethodType_info::CONSTANT_MethodType_info(unsigned char *bytecode)
     descriptor_index = u2(bytecode);
 }
 CONSTANT_MethodType_info::CONSTANT_MethodType_info(
-                                    const CONSTANT_MethodType_info& cpy)
+                                                   const CONSTANT_MethodType_info& cpy)
 {
     descriptor_index = cpy.descriptor_index;
 }
@@ -569,13 +577,13 @@ void CONSTANT_MethodType_info::writeToFile(void *file_ptr)
 #pragma mark -
 
 CONSTANT_InvokeDynamic_info::
-    CONSTANT_InvokeDynamic_info(unsigned char *bytecode)
+CONSTANT_InvokeDynamic_info(unsigned char *bytecode)
 {
     bootstrap_method_attr_index = u2(bytecode);
     name_and_type_index         = u2(bytecode + 2);
 }
 CONSTANT_InvokeDynamic_info::
-        CONSTANT_InvokeDynamic_info(const CONSTANT_InvokeDynamic_info& cpy)
+CONSTANT_InvokeDynamic_info(const CONSTANT_InvokeDynamic_info& cpy)
 {
     bootstrap_method_attr_index = cpy.bootstrap_method_attr_index;
     name_and_type_index         = cpy.name_and_type_index;
@@ -693,7 +701,7 @@ void field_info::addNewAttribute(attribute_info newAttr, unsigned short index)
     if(index >= attributes_count)
         throw FieldInfoNewAttributeIndexGraterThanCapacity();
     attributes[index] = newAttr;
-        
+    
 }
 /****************************************************************
  *                      field_info struct                       *
@@ -824,6 +832,7 @@ attribute_info::attribute_info(){
     attribute_name_index = u2((unsigned short)0);
     attribute_length = u4((unsigned int)0);
     info = NULL;
+    _ownsInfoMemory = false;
 }
 attribute_info::attribute_info(const attribute_info& cpy)
 {
@@ -831,12 +840,11 @@ attribute_info::attribute_info(const attribute_info& cpy)
     attribute_length        = cpy.attribute_length;
     if(attribute_length){
         info = (u1 *)malloc(sizeof(u1)*attribute_length);
-        for(unsigned int i=0; i != attribute_length; i++)
-            info[i] = cpy.info[i];
-        //memcpy(info, cpy.info,sizeof(u1)*attribute_length);
+        memcpy(info, cpy.info,sizeof(u1)*attribute_length);
     }else{
         info = NULL;
     }
+    _ownsInfoMemory = true;
 }
 attribute_info & attribute_info::operator= (const attribute_info& rs)
 {
@@ -851,6 +859,7 @@ attribute_info & attribute_info::operator= (const attribute_info& rs)
     }else{
         info = NULL;
     }
+    _ownsInfoMemory = true;
     return *this;
 }
 void attribute_info::writeToFile(void *file_ptr)
@@ -861,7 +870,7 @@ void attribute_info::writeToFile(void *file_ptr)
 }
 attribute_info::~attribute_info()
 {
-    if(info != NULL){
+    if(_ownsInfoMemory && info != NULL){
         free(info);
         info = NULL;
     }
@@ -885,7 +894,7 @@ ConstantValue_attribute::ConstantValue_attribute(unsigned short index)
 }
 
 ConstantValue_attribute::
-            ConstantValue_attribute(const ConstantValue_attribute& rs)
+ConstantValue_attribute(const ConstantValue_attribute& rs)
 {
     constantvalue_index = rs.constantvalue_index;
 }

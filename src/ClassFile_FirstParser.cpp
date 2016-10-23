@@ -1,6 +1,6 @@
 //
 //  ClassFile_FirstParser.cpp
-//  
+//
 //
 //  Created by Alfredo Cruz on 9/30/16.
 //
@@ -12,7 +12,7 @@
 #include <vector>
 #include <iostream>
 
-#pragma mark Holders 
+#pragma mark Holders
 std::vector<method_info *> *methodsHolder(ClassFile *_cf)
 {
     return (std::vector<method_info *> *)_cf->methods;
@@ -31,8 +31,8 @@ std::vector<cp_info> *constantPoolHolder(ClassFile *_cf)
 
 
 unsigned char *ClassFile_FP::_fillFieldAttribute(field_info **fi,
-                                                       unsigned short fi_count,
-                                                       unsigned char *payload_ptr)
+                                                 unsigned short fi_count,
+                                                 unsigned char *payload_ptr)
 {
     //Fetch the fields
     for(unsigned short i=0; i != fi_count; i++){
@@ -74,8 +74,8 @@ unsigned char *ClassFile_FP::_fillFieldAttribute(field_info **fi,
 
 
 unsigned char *ClassFile_FP::_fillMethodAttribute(method_info **fi,
-                                                 unsigned short fi_count,
-                                                 unsigned char *payload_ptr)
+                                                  unsigned short fi_count,
+                                                  unsigned char *payload_ptr)
 {
     //Fetch the fields
     for(unsigned short i=0; i != fi_count; i++){
@@ -182,12 +182,12 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
     
     
     /*****************************************************
-                   Start: Constant pool fill
+     Start: Constant pool fill
      ****************************************************/
     
     //Get the number of elements in the constant pool
     unsigned short constant_pool_size = _classFile ->
-                                        constant_pool_count;
+    constant_pool_count;
     
     std::vector<cp_info> *constant_pool = new std::vector<cp_info>();
     
@@ -282,18 +282,18 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
                 break;
         }
         _push_into_constant_pool(newInfo);
-        
+        newInfo.claimInfoMemory();
     }
     
     
     /*****************************************************
-                    End: Constant pool fill
+     End: Constant pool fill
      ****************************************************/
     
     
     
     /*****************************************************
-                    Start: Interfaces fill
+     Start: Interfaces fill
      ****************************************************/
     
     //Fill the fields from access_flags up to fields
@@ -313,14 +313,14 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
         _classFile ->interfaces = NULL;
     }
     /*****************************************************
-                    End: Interfaces fill
+     End: Interfaces fill
      ****************************************************/
     
     
     
     
     /*****************************************************
-                    Start: Fields fill
+     Start: Fields fill
      ****************************************************/
     
     memcpy(&_classFile ->fields_count, payload_ptr, sizeof(u2));
@@ -337,9 +337,9 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
         if(!tmpFields)
             throw NoMemoryError();
         payload_ptr =
-                this ->_fillFieldAttribute(tmpFields,
-                                                 fields_size,
-                                                 payload_ptr);
+        this ->_fillFieldAttribute(tmpFields,
+                                   fields_size,
+                                   payload_ptr);
         //Copy back the fields to the vector
         std::vector<field_info *> *fields = new std::vector<field_info *>();
         if(!fields)
@@ -359,13 +359,13 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
     }
     
     /*****************************************************
-                    End: Fields fill
+     End: Fields fill
      ****************************************************/
     
     
     
     /*****************************************************
-                    Start: Methods fill
+     Start: Methods fill
      ****************************************************/
     
     //Fill the methods info
@@ -377,15 +377,15 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
         //Reserve memory
         
         method_info **tmpMethods = (method_info **)malloc(sizeof(method_info *)*
-                                                         methods_count);
+                                                          methods_count);
         
         if(!tmpMethods)
             throw NoMemoryError();
         //Fill the methods
         payload_ptr =
-            this ->_fillMethodAttribute(tmpMethods,
-                                        methods_count,
-                                        payload_ptr);
+        this ->_fillMethodAttribute(tmpMethods,
+                                    methods_count,
+                                    payload_ptr);
         //Copy back the methods to the vector
         std::vector<method_info *> *methods = new std::vector<method_info*>();
         if(!methods)
@@ -400,7 +400,7 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
     }
     
     /*****************************************************
-                    End: Methods fill
+     End: Methods fill
      ****************************************************/
     
     
@@ -408,7 +408,7 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
     
     
     /*****************************************************
-                    Start: Attributes fill
+     Start: Attributes fill
      ****************************************************/
     
     _classFile ->attributes_count = u2(payload_ptr);
@@ -432,7 +432,7 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
         newAttrib.attribute_length = u4(payload_ptr);
         payload_ptr += 4;
         unsigned int attrLen =
-                    newAttrib.attribute_length;
+        newAttrib.attribute_length;
         if(!attrLen){
             newAttrib.info = NULL;
             continue;
@@ -447,10 +447,11 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
                attrLen);
         payload_ptr += attrLen;
         attributes ->push_back(newAttrib);
+        free(newAttrib.info);
     }
     
     /*****************************************************
-                    End: Attributes fill
+     End: Attributes fill
      ****************************************************/
     
     
@@ -467,7 +468,7 @@ void ClassFile_FP::dumpBytecode(const char *filename)
     std::vector<field_info *> *fields = fieldsHolder(this ->_classFile);
     std::vector<method_info *> *methods = methodsHolder(this ->_classFile);
     std::vector<attribute_info> *attributes =
-            (std::vector<attribute_info> *)(this ->_classFile ->attributes);
+    (std::vector<attribute_info> *)(this ->_classFile ->attributes);
     
     _classFile ->magic.writeToFile(outFile);
     _classFile ->minor_version.writeToFile(outFile);
@@ -483,57 +484,57 @@ void ClassFile_FP::dumpBytecode(const char *filename)
                 break;
             case CONSTANT_Fieldref:
                 ((CONSTANT_Fieldref_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_Methodref:
                 ((CONSTANT_Methodref_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_InterfaceMethodref:
                 ((CONSTANT_InterfaceMethodref_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_String:
                 ((CONSTANT_String_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_Integer:
                 ((CONSTANT_Integer_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_Float:
                 ((CONSTANT_Float_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_Long:
                 ((CONSTANT_Long_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 i++;
                 break;
             case CONSTANT_Double:
                 ((CONSTANT_Double_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 i++;
                 break;
             case CONSTANT_NameAndType:
                 ((CONSTANT_NameAndType_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_Utf8:
                 ((CONSTANT_Utf8_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_MethodHandle:
                 ((CONSTANT_MethodHandle_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_MethodType:
                 ((CONSTANT_MethodType_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             case CONSTANT_InvokeDynamic:
                 ((CONSTANT_InvokeDynamic_info *)cp_entry.info) ->
-                                    writeToFile(outFile);
+                writeToFile(outFile);
                 break;
             default:
                 throw ConstantPool_TagNotRecognized();
@@ -574,7 +575,7 @@ unsigned int ClassFile_FP::constantPoolSize()
 {
     if(_classFile && _classFile ->constant_pool)
         return (unsigned int)((std::vector<cp_info> *)
-                          _classFile ->constant_pool)->size();
+                              _classFile ->constant_pool)->size();
     return 0;
 }
 
@@ -622,7 +623,7 @@ unsigned int ClassFile_FP::attributesSize()
  *****************************************************/
 
 attribute_info ClassFile_FP::
-            addConstantValue_Long(CONSTANT_Long_info value)
+addConstantValue_Long(CONSTANT_Long_info value)
 {
     if(_definedCPAttributes.ConstantValue == (unsigned short)-1){
         //Add ConstantValue to the CP
@@ -678,11 +679,11 @@ attribute_info ClassFile_FP::
 
 
 void ClassFile_FP::addStaticField(
-              u2 access_flags,
-              const char *fieldName,
-              const char *fieldDesc,
-              u2 attributes_count,
-              attribute_info  *attributes)
+                                  u2 access_flags,
+                                  const char *fieldName,
+                                  const char *fieldDesc,
+                                  u2 attributes_count,
+                                  attribute_info  *attributes)
 {
     //Check access_flags
     u2 aFlag = access_flags & u2((unsigned short)7);
@@ -730,27 +731,27 @@ void ClassFile_FP::addStaticField(
     
     //In the attributes list we check if we have the ConstantValue
     /*unsigned short attrib_size = attributes_count;
-    bool foundConstantValue = false;
-    for(unsigned short i=0; i != attrib_size; i++){
-        u2 att_index = attributes[i].attribute_name_index;
-        if(constant_pool ->at(att_index).tag == CONSTANT_Utf8){
-            //For the moment use strcmp assuming all changes are made
-            //within ASCII world
-            CONSTANT_Utf8_info *utf8_ptr =
-            (CONSTANT_Utf8_info *)constant_pool ->at(att_index).info;
-            if(!strcmp((const char *)(utf8_ptr->bytes),
-                       "ConstantValue")){
-                //We found the ConstantValue attribute
-                foundConstantValue = true;
-                break;
-            }
-        }
-    }
-    if(!foundConstantValue)
-        throw NoConstantValueAttributeForStaticField(); */
+     bool foundConstantValue = false;
+     for(unsigned short i=0; i != attrib_size; i++){
+     u2 att_index = attributes[i].attribute_name_index;
+     if(constant_pool ->at(att_index).tag == CONSTANT_Utf8){
+     //For the moment use strcmp assuming all changes are made
+     //within ASCII world
+     CONSTANT_Utf8_info *utf8_ptr =
+     (CONSTANT_Utf8_info *)constant_pool ->at(att_index).info;
+     if(!strcmp((const char *)(utf8_ptr->bytes),
+     "ConstantValue")){
+     //We found the ConstantValue attribute
+     foundConstantValue = true;
+     break;
+     }
+     }
+     }
+     if(!foundConstantValue)
+     throw NoConstantValueAttributeForStaticField(); */
     //Assemble the field and add it to the fields
     field_info *newField = new field_info(access_flags,name_index,desc_index,
-                        attributes_count,attributes);
+                                          attributes_count,attributes);
     ((std::vector<field_info *> *)(_classFile ->fields)) ->push_back(newField);
     
 }
@@ -764,8 +765,8 @@ void ClassFile_FP::addStaticField(
  *****************************************************/
 
 void ClassFile_FP::addNativeMethod(u2 access_flags,
-                     const char *methodName,
-                     const char *methodDesc)
+                                   const char *methodName,
+                                   const char *methodDesc)
 {
     //Check access_flags
     u2 aFlag = access_flags & u2((unsigned short)7);
@@ -808,7 +809,7 @@ void ClassFile_FP::addNativeMethod(u2 access_flags,
     method_info *newMethod = new method_info(access_flags, name_index,desc_index,
                                              u2((unsigned short)0),NULL);
     ((std::vector<method_info *> *)
-                (_classFile ->methods)) ->push_back(newMethod);
+     (_classFile ->methods)) ->push_back(newMethod);
 }
 
 #pragma mark -
@@ -818,8 +819,8 @@ void ClassFile_FP::addNativeMethod(u2 access_flags,
 void ClassFile_FP::printMethodAt(unsigned short index)
 {
     /*************************************************
-                        General output
-     Name: 
+     General output
+     Name:
      Flags:
      Descriptor:
      *************************************************/
