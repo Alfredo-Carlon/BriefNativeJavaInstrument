@@ -110,7 +110,7 @@ unsigned char *ClassFile_FP::_fillMethodAttribute(method_info **fi,
     return payload_ptr;
 }
 
-void ClassFile_FP::_push_into_constant_pool(cp_info& data)
+u2 ClassFile_FP::_push_into_constant_pool(cp_info& data, bool updateSize)
 {
     ((std::vector<cp_info> *)(_classFile->constant_pool))->push_back(data);
     _constant_pool_next_index++;
@@ -122,6 +122,100 @@ void ClassFile_FP::_push_into_constant_pool(cp_info& data)
         ((std::vector<cp_info> *)(_classFile->constant_pool))->push_back(data);
         _constant_pool_next_index++;
     }
+    //Update the bytecode size
+    if(updateSize)
+        _size_in_bytes += sizeof(u1); //cp_info tag size
+    switch (data.tag) {
+        case CONSTANT_Class:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_Class_info *)(data.info)) ->size();
+            break;
+        case CONSTANT_Fieldref:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_Fieldref_info *)
+                                   (data.info)) ->size();
+            break;
+        case CONSTANT_Methodref:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_Methodref_info *)
+                                   (data.info)) ->size();
+            break;
+        case CONSTANT_InterfaceMethodref:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_InterfaceMethodref_info *)
+                               (data.info)) ->size();
+            break;
+        case CONSTANT_String:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_String_info *)
+                                   (data.info)) ->size();
+            break;
+        case CONSTANT_Integer:
+            if(updateSize)
+            _size_in_bytes += ((CONSTANT_Integer_info *)
+                               (data.info)) ->size();
+            break;
+        case CONSTANT_Float:
+            if(updateSize)
+            _size_in_bytes += ((CONSTANT_Float_info *)
+                               (data.info)) ->size();
+            break;
+        case CONSTANT_Long:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_Long_info *)
+                                   (data.info)) ->size();
+            break;
+        case CONSTANT_Double:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_Double_info *)
+                                   (data.info)) ->size();
+            break;
+        case CONSTANT_NameAndType:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_NameAndType_info *)
+                               (data.info)) ->size();
+            break;
+        case CONSTANT_Utf8:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_Utf8_info *)(data.info)) ->size();
+            break;
+        case CONSTANT_MethodHandle:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_MethodHandle_info *)
+                               (data.info)) ->size();
+            break;
+        case CONSTANT_MethodType:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_MethodType_info *)
+                               (data.info)) ->size();
+            break;
+        case CONSTANT_InvokeDynamic:
+            if(updateSize)
+                _size_in_bytes += ((CONSTANT_InvokeDynamic_info *)
+                               (data.info)) ->size();
+            break;
+        default:
+            throw ConstantPool_TagNotRecognized();
+            break;
+    }
+    return _constant_pool_next_index - 1;
+}
+
+bool ClassFile_FP::_cpEntryMatches(unsigned short entry, const char *str)
+{
+    std::vector<cp_info> *cp = constantPoolHolder(this ->_classFile);
+    cp_info cpentry = cp ->at(entry-1);
+    if(cpentry.tag != CONSTANT_Utf8)
+        return false;
+    CONSTANT_Utf8_info *info = (CONSTANT_Utf8_info *)(cpentry.info);
+    if(strlen(str) != info ->length)
+        return false;
+    //check each character
+    for(unsigned short i=0; i != info ->length; i++)
+        if (str[i] != info ->bytes[i]) {
+            return false;
+        }
+    return true;
 }
 
 #pragma mark -
@@ -134,12 +228,16 @@ void ClassFile_FP::_push_into_constant_pool(cp_info& data)
 ClassFile_FP::ClassFile_FP()
 {
     _classFile = NULL;
+    _className = NULL;
     _constant_pool_next_index = 1;
 }
 
 //Destructor
 ClassFile_FP::~ClassFile_FP()
 {
+    if(_className)
+        free((void *)_className);
+    
     if(!_classFile)
         return;
     //Assume the whole classFile is fully loaded
@@ -281,7 +379,7 @@ void ClassFile_FP::loadBytecode(unsigned char *payload,
                 throw ConstantPool_TagNotRecognized();
                 break;
         }
-        _push_into_constant_pool(newInfo);
+        _push_into_constant_pool(newInfo,false);
         newInfo.claimInfoMemory();
     }
     
@@ -569,6 +667,13 @@ void ClassFile_FP::dumpBytecode(const char *filename)
     
 }
 
+
+void ClassFile_FP::setClassName(const char *name)
+{
+    _className = (char *)malloc(strlen(name)+1);
+    strcpy((char *)_className, name);
+}
+
 //Returns the number of elements in the
 //constant pool of _classFile
 unsigned int ClassFile_FP::constantPoolSize()
@@ -632,12 +737,8 @@ addConstantValue_Long(CONSTANT_Long_info value)
         cp_info cp_entry;
         cp_entry.tag = CONSTANT_Utf8;
         cp_entry.info = &newCV;
-        this ->_push_into_constant_pool(cp_entry);
-        _definedCPAttributes.ConstantValue = _constant_pool_next_index - 1;
-        
-        //Update the size of the bytecode
-        _size_in_bytes += sizeof(u1);
-        _size_in_bytes += newCV.size();
+        _definedCPAttributes.ConstantValue =
+                        this ->_push_into_constant_pool(cp_entry,true);
     }
     attribute_info ret;
     ret.attribute_name_index    = _definedCPAttributes.ConstantValue;
@@ -651,11 +752,8 @@ addConstantValue_Long(CONSTANT_Long_info value)
     cp_info long_cp;
     long_cp.tag = CONSTANT_Long;
     long_cp.info = &value;
-    this ->_push_into_constant_pool(long_cp);
+    this ->_push_into_constant_pool(long_cp,true);
     
-    //Update the size of the long entry in the CP
-    _size_in_bytes += sizeof(u1);
-    _size_in_bytes += value.size();
     
     ConstantValue_attribute attr(_constant_pool_next_index-2);
     ret.info = (u1 *)malloc(sizeof(ConstantValue_attribute));
@@ -706,49 +804,19 @@ void ClassFile_FP::addStaticField(
     cp_info newFieldCP;
     newFieldCP.tag = CONSTANT_Utf8;
     newFieldCP.info = new CONSTANT_Utf8_info(strlen(fieldName),fieldName);
-    _push_into_constant_pool(newFieldCP);
+    u2 name_index = _push_into_constant_pool(newFieldCP,true);
     
-    //Update the size of the bytecode
-    _size_in_bytes += sizeof(u1);
-    _size_in_bytes += ((CONSTANT_Utf8_info *)newFieldCP.info) ->size();
-    
-    u2 name_index(_constant_pool_next_index - 1);
     delete (CONSTANT_Utf8_info *)newFieldCP.info;
     newFieldCP.info = new CONSTANT_Utf8_info(strlen(fieldDesc),fieldDesc);
-    _push_into_constant_pool(newFieldCP);
+    u2 desc_index = _push_into_constant_pool(newFieldCP,true);
     
-    //Update the size of the bytecode
-    _size_in_bytes += sizeof(u1);
-    _size_in_bytes += ((CONSTANT_Utf8_info *)newFieldCP.info) ->size();
-    
-    
-    u2 desc_index(_constant_pool_next_index - 1);
     delete (CONSTANT_Utf8_info *)newFieldCP.info;
     
     //Update the size of the bytecode
     //To account for: name_index, desc_index and attributes_count
     _size_in_bytes += sizeof(u2)*3;
     
-    //In the attributes list we check if we have the ConstantValue
-    /*unsigned short attrib_size = attributes_count;
-     bool foundConstantValue = false;
-     for(unsigned short i=0; i != attrib_size; i++){
-     u2 att_index = attributes[i].attribute_name_index;
-     if(constant_pool ->at(att_index).tag == CONSTANT_Utf8){
-     //For the moment use strcmp assuming all changes are made
-     //within ASCII world
-     CONSTANT_Utf8_info *utf8_ptr =
-     (CONSTANT_Utf8_info *)constant_pool ->at(att_index).info;
-     if(!strcmp((const char *)(utf8_ptr->bytes),
-     "ConstantValue")){
-     //We found the ConstantValue attribute
-     foundConstantValue = true;
-     break;
-     }
-     }
-     }
-     if(!foundConstantValue)
-     throw NoConstantValueAttributeForStaticField(); */
+    
     //Assemble the field and add it to the fields
     field_info *newField = new field_info(access_flags,name_index,desc_index,
                                           attributes_count,attributes);
@@ -785,22 +853,12 @@ void ClassFile_FP::addNativeMethod(u2 access_flags,
     cp_info newFieldCP;
     newFieldCP.tag = CONSTANT_Utf8;
     newFieldCP.info = new CONSTANT_Utf8_info(strlen(methodName),methodName);
-    _push_into_constant_pool(newFieldCP);
+    u2 name_index = _push_into_constant_pool(newFieldCP,true);
     
-    //Update the size of the bytecode
-    _size_in_bytes += sizeof(u1);
-    _size_in_bytes += ((CONSTANT_Utf8_info *)(newFieldCP.info)) ->size();
-    
-    u2 name_index(_constant_pool_next_index - 1);
     delete (CONSTANT_Utf8_info *)newFieldCP.info;
     newFieldCP.info = new CONSTANT_Utf8_info(strlen(methodDesc),methodDesc);
-    _push_into_constant_pool(newFieldCP);
+    u2 desc_index = _push_into_constant_pool(newFieldCP,true);
     
-    //Update the size of the bytecode
-    _size_in_bytes += sizeof(u1);
-    _size_in_bytes += ((CONSTANT_Utf8_info *)(newFieldCP.info)) ->size();
-    
-    u2 desc_index(_constant_pool_next_index - 1);
     delete (CONSTANT_Utf8_info *)newFieldCP.info;
     
     //Update the size of the bytecode for name_index and desc_index
@@ -810,6 +868,336 @@ void ClassFile_FP::addNativeMethod(u2 access_flags,
                                              u2((unsigned short)0),NULL);
     ((std::vector<method_info *> *)
      (_classFile ->methods)) ->push_back(newMethod);
+}
+
+
+/***************************************************************
+ * Adds a Fieldref_info structure into the CP and returns its
+ * index
+ * Adds fieldName, type and className to the CP.
+ * If className is NULL, the name of the current class is used
+ *
+ ***************************************************************/
+u2 ClassFile_FP::addFieldRef(const char *fieldName,
+                                      const char *type,
+                                      const char *className)
+{
+    CONSTANT_Fieldref_info retField;
+    if(!className)
+    {
+        if(_definedCPAttributes.ClassName == (unsigned short)-1){
+            //Use the already data in CP
+            cp_info utfClassName;
+            utfClassName.tag = CONSTANT_Utf8;
+            CONSTANT_Utf8_info *nptr = new CONSTANT_Utf8_info(strlen(_className),
+                                                              _className);
+            utfClassName.info = nptr;
+            u2 classNameIndex = _push_into_constant_pool(utfClassName,true);
+            delete nptr;
+            
+            utfClassName.tag = CONSTANT_Class;
+            CONSTANT_Class_info *classPtr =
+                                    new CONSTANT_Class_info(classNameIndex);
+            utfClassName.info = classPtr;
+            utfClassName.claimInfoMemory();
+            
+            
+            _definedCPAttributes.ClassName =
+                        _push_into_constant_pool(utfClassName,true);
+        }
+        retField.class_index = _definedCPAttributes.ClassName;
+    }else{
+        //Put the name of the class into the Constant Pool
+        cp_info utfClassName;
+        utfClassName.tag = CONSTANT_Utf8;
+        CONSTANT_Utf8_info *nptr = new CONSTANT_Utf8_info(strlen(_className),
+                                                          _className);
+        utfClassName.info = nptr;
+        utfClassName.claimInfoMemory();
+        retField.class_index = _push_into_constant_pool(utfClassName,true);
+    }
+    //Push the name of the field and its type into the constant pool
+    CONSTANT_Utf8_info *fname = new CONSTANT_Utf8_info(strlen(fieldName),
+                                                      fieldName);
+    CONSTANT_Utf8_info *ftype = new CONSTANT_Utf8_info(strlen(type),
+                                                      type);
+    
+    cp_info nameType;
+    nameType.tag    = CONSTANT_Utf8;
+    nameType.info   = (void *)fname;
+    //Push the name into the constant pool
+    u2 nameIndex    = _push_into_constant_pool(nameType,true);
+    nameType.info   = (void *)ftype;
+    u2 typeIndex    = _push_into_constant_pool(nameType,true);
+    
+    
+    delete fname;
+    delete ftype;
+    
+    //CONSTANT_NameAndType_info
+    cp_info cpNameType;
+    CONSTANT_NameAndType_info ntype;
+    ntype.name_index        = nameIndex;
+    ntype.descriptor_index  = typeIndex;
+    //Create a field descriptor
+    cpNameType.tag  = CONSTANT_NameAndType;
+    cpNameType.info = &ntype;
+    retField.name_and_type_index = _push_into_constant_pool(cpNameType,true);
+    
+    //Add the fieldRef to the cp
+    cp_info fieldRefAddCP;
+    fieldRefAddCP.tag = CONSTANT_Fieldref;
+    fieldRefAddCP.info = &retField;
+    
+    return _push_into_constant_pool(fieldRefAddCP,true);
+}
+
+/***************************************************************
+ * Adds a Methodref_info structure into the CP and returns its
+ * index
+ * Adds methodName, type and className to the CP.
+ * If className is NULL, the name of the current class is used
+ *
+ ***************************************************************/
+u2 ClassFile_FP::addMethodRef(const char *methodName,
+                const char *signature,
+                const char *className)
+{
+    CONSTANT_Methodref_info retField;
+    if(!className)
+    {
+        if(_definedCPAttributes.ClassName == (unsigned short)-1){
+            //Use the already data in CP
+            cp_info utfClassName;
+            utfClassName.tag = CONSTANT_Utf8;
+            CONSTANT_Utf8_info *nptr = new CONSTANT_Utf8_info(strlen(_className),
+                                                              _className);
+            utfClassName.info = nptr;
+            u2 classNameIndex = _push_into_constant_pool(utfClassName,true);
+            delete nptr;
+            
+            utfClassName.tag = CONSTANT_Class;
+            CONSTANT_Class_info *classPtr =
+            new CONSTANT_Class_info(classNameIndex);
+            utfClassName.info = classPtr;
+            utfClassName.claimInfoMemory();
+            
+            
+            _definedCPAttributes.ClassName =
+            _push_into_constant_pool(utfClassName,true);
+        }
+        retField.class_index = _definedCPAttributes.ClassName;
+    }else{
+        //Put the name of the class into the Constant Pool
+        cp_info utfClassName;
+        utfClassName.tag = CONSTANT_Utf8;
+        CONSTANT_Utf8_info *nptr = new CONSTANT_Utf8_info(strlen(className),
+                                                          className);
+        utfClassName.info = nptr;
+        u2 classNameIndex = _push_into_constant_pool(utfClassName,true);
+        delete nptr;
+        
+        utfClassName.tag = CONSTANT_Class;
+        CONSTANT_Class_info *classPtr =
+        new CONSTANT_Class_info(classNameIndex);
+        utfClassName.info = classPtr;
+        utfClassName.claimInfoMemory();
+        
+        retField.class_index = _push_into_constant_pool(utfClassName,true);
+    }
+    //Push the name of the method and its signature into the constant pool
+    CONSTANT_Utf8_info *fname = new CONSTANT_Utf8_info(strlen(methodName),
+                                                       methodName);
+    CONSTANT_Utf8_info *ftype = new CONSTANT_Utf8_info(strlen(signature),
+                                                       signature);
+    
+    cp_info nameType;
+    nameType.tag    = CONSTANT_Utf8;
+    nameType.info   = (void *)fname;
+    //Push the name into the constant pool
+    u2 nameIndex    = _push_into_constant_pool(nameType,true);
+    nameType.info   = (void *)ftype;
+    u2 typeIndex    = _push_into_constant_pool(nameType,true);
+    
+    
+    delete fname;
+    delete ftype;
+    
+    //CONSTANT_NameAndType_info
+    cp_info cpNameType;
+    CONSTANT_NameAndType_info ntype;
+    ntype.name_index        = nameIndex;
+    ntype.descriptor_index  = typeIndex;
+    //Create a field descriptor
+    cpNameType.tag  = CONSTANT_NameAndType;
+    cpNameType.info = &ntype;
+    retField.name_and_type_index = _push_into_constant_pool(cpNameType,true);
+    
+    //Add the fieldRef to the cp
+    cp_info fieldRefAddCP;
+    fieldRefAddCP.tag = CONSTANT_Methodref;
+    fieldRefAddCP.info = &retField;
+    
+    return _push_into_constant_pool(fieldRefAddCP,true);
+}
+#pragma mark -
+#pragma mark Method's Code Modifications
+
+void ClassFile_FP::add_getstatic(unsigned short   methodIndex,
+                   unsigned short   instOffset,
+                   const char       *fieldName,
+                   const char       *fieldType,
+                   const char       *className)
+{
+    u2 fieldRefIndex = addFieldRef(fieldName, fieldType, className);
+    add_getstatic(methodIndex, instOffset, fieldRefIndex);
+}
+
+void ClassFile_FP::add_getstatic(unsigned short   methodIndex,
+                   unsigned short   instOffset,
+                   unsigned short   cpIndexOfData)
+{
+    
+    u2 fieldRefIndex(cpIndexOfData);
+    //Get the method at index
+    std::vector<method_info *> *methods = methodsHolder(this ->_classFile);
+    if (!(methodIndex < methods ->size())) {
+        throw InvalidMethodIndex();
+    }
+    method_info *method = methods ->at(methodIndex);
+    //For the method look the Code attribute
+    Code_attribute code;
+    u1 *attribInfo = NULL;
+    unsigned short attribIndex = -1;
+    for(unsigned short i=0; i != method ->attributes_count; i++){
+        if(_cpEntryMatches(method ->attributes[i].attribute_name_index,
+                           "Code")){
+            attribInfo = (method ->attributes[i].info);
+            attribIndex = i;
+            break;
+        }
+    }
+    //Initialize code
+    memcpy(&code, attribInfo, sizeof(u2)*2+sizeof(u4));
+    
+    if(instOffset > code.code_length)
+        throw InvalidInstructionOffset();
+    //Now that we have the code we modify it
+    //the max_stack must be increased by one
+    code.max_stack += 1;
+    
+    //The code size is increased in 3 bytes
+    code.code_length += 3;
+    
+    //Allocate a new array for the code (to be changed for a vector)
+    code.code = (u1 *)malloc(sizeof(u1)*code.code_length);
+    if(!code.code)
+        throw NoMemoryError();
+    u1 *codeStart = attribInfo + sizeof(u2)*2+sizeof(u4);
+    //Copy the code up to the index of the next instruction
+    memcpy(code.code, codeStart,sizeof(u1)*instOffset);
+    //Now insert the instruction
+    code.code[instOffset] = 0xb2;
+    fieldRefIndex.writeToArray(code.code+instOffset+1);
+    memcpy(code.code + instOffset+3, codeStart + instOffset,
+           sizeof(u1)*(code.code_length - instOffset - 3));
+    
+    //Now copy the new code to the attribInfo
+    method ->attributes[attribIndex].attribute_length += 3;
+    u1 *modifiedAttribute = (u1 *)malloc(sizeof(u1)*
+                            method ->attributes[attribIndex].attribute_length);
+    //Fill the attribute
+    unsigned int arrayOffset = sizeof(u2)*2+sizeof(u4);
+    memcpy(modifiedAttribute, &code, sizeof(u2)*2+sizeof(u4));
+    memcpy(modifiedAttribute+arrayOffset,
+           code.code, sizeof(u1)*code.code_length);
+    arrayOffset += code.code_length;
+    memcpy(modifiedAttribute+arrayOffset,
+           codeStart + code.code_length-3,
+           method ->attributes[attribIndex].attribute_length-arrayOffset);
+    free(method ->attributes[attribIndex].info);
+    method ->attributes[attribIndex].info = modifiedAttribute;
+    free(code.code);
+    
+    _size_in_bytes += 3;
+}
+
+void ClassFile_FP::add_invokestatic(unsigned short    methodIndex,
+                      unsigned short    instOffset,
+                      const char        *methodName,
+                      const char        *methodSignature,
+                      const char        *className)
+{
+    u2 methodRefIndex = addMethodRef(methodName, methodSignature, className);
+    add_invokestatic(methodIndex, instOffset, methodRefIndex);
+}
+
+void ClassFile_FP::add_invokestatic(unsigned short    methodIndex,
+                      unsigned short    instOffset,
+                      unsigned short    cpIndexOfData)
+{
+    u2 methodRefIndex(cpIndexOfData);
+    //Get the method at index
+    std::vector<method_info *> *methods = methodsHolder(this ->_classFile);
+    if (!(methodIndex < methods ->size())) {
+        throw InvalidMethodIndex();
+    }
+    method_info *method = methods ->at(methodIndex);
+    //For the method look the Code attribute
+    Code_attribute code;
+    u1 *attribInfo = NULL;
+    unsigned short attribIndex = -1;
+    for(unsigned short i=0; i != method ->attributes_count; i++){
+        if(_cpEntryMatches(method ->attributes[i].attribute_name_index,
+                           "Code")){
+            attribInfo = (method ->attributes[i].info);
+            attribIndex = i;
+            break;
+        }
+    }
+    //Initialize code
+    memcpy(&code, attribInfo, sizeof(u2)*2+sizeof(u4));
+    
+    if(instOffset > code.code_length)
+        throw InvalidInstructionOffset();
+    //Now that we have the code we modify it
+    //the max_stack must be increased by one
+    code.max_stack += 1;
+    
+    //The code size is increased in 3 bytes
+    code.code_length += 3;
+    
+    //Allocate a new array for the code (to be changed for a vector)
+    code.code = (u1 *)malloc(sizeof(u1)*code.code_length);
+    if(!code.code)
+        throw NoMemoryError();
+    u1 *codeStart = attribInfo + sizeof(u2)*2+sizeof(u4);
+    //Copy the code up to the index of the next instruction
+    memcpy(code.code, codeStart,sizeof(u1)*instOffset);
+    //Now insert the instruction
+    code.code[instOffset] = 0xb8;
+    methodRefIndex.writeToArray(code.code+instOffset+1);
+    memcpy(code.code + instOffset+3, codeStart + instOffset,
+           sizeof(u1)*(code.code_length - instOffset - 3));
+    
+    //Now copy the new code to the attribInfo
+    method ->attributes[attribIndex].attribute_length += 3;
+    u1 *modifiedAttribute = (u1 *)malloc(sizeof(u1)*
+                                         method ->attributes[attribIndex].attribute_length);
+    //Fill the attribute
+    unsigned int arrayOffset = sizeof(u2)*2+sizeof(u4);
+    memcpy(modifiedAttribute, &code, sizeof(u2)*2+sizeof(u4));
+    memcpy(modifiedAttribute+arrayOffset,
+           code.code, sizeof(u1)*code.code_length);
+    arrayOffset += code.code_length;
+    memcpy(modifiedAttribute+arrayOffset,
+           codeStart + code.code_length-3,
+           method ->attributes[attribIndex].attribute_length-arrayOffset);
+    free(method ->attributes[attribIndex].info);
+    method ->attributes[attribIndex].info = modifiedAttribute;
+    free(code.code);
+    
+    _size_in_bytes += 3;
 }
 
 #pragma mark -

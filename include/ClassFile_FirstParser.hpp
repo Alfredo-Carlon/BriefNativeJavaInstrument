@@ -24,11 +24,14 @@ private:
     //Struct to hold defined names already in the Constant Pool.
     struct _dCPa {
         unsigned short ConstantValue;
-        
+        unsigned short ClassName;
         _dCPa(){
             ConstantValue = -1;
+            ClassName = -1;
         }
     }_definedCPAttributes;
+    
+    const char *_className;
     
     
     //Counter for the next constant pool entry
@@ -59,8 +62,11 @@ private:
                                               unsigned char *);
     
     //Pushes a value into _classFile's constant pool
-    void _push_into_constant_pool(cp_info& data);
+    u2 _push_into_constant_pool(cp_info& data, bool updateSize);
     
+    
+    //Looks if a given Utf8 CP index matches the given name
+    bool _cpEntryMatches(unsigned short entry, const char *str);
     
     
 public:
@@ -79,7 +85,8 @@ public:
     //Dumps the bytecode to disk at 'filename'
     void dumpBytecode(const char *filename);
     
-    
+    //Sets the name of the class for the bytecode
+    void setClassName(const char *name);
     
     
     //Returns the number of elements in the
@@ -138,8 +145,97 @@ public:
                         const char *methodName,
                         const char *methodDesc);
     
+    /***************************************************************
+     * Adds a Fieldref_info structure into the CP and returns its
+     * index
+     * Adds fieldName, type and className to the CP.
+     * If className is NULL, the name of the current class is used
+     *
+     ***************************************************************/
+    u2 addFieldRef(const char *fieldName,
+                         const char *type,
+                         const char *className);
+    
+    /***************************************************************
+     * Adds a Methodref_info structure into the CP and returns its
+     * index
+     * Adds methodName, type and className to the CP.
+     * If className is NULL, the name of the current class is used
+     *
+     ***************************************************************/
+    u2 addMethodRef(const char *methodName,
+                    const char *signature,
+                    const char *className);
+    
+    
+    
+    
+    
+    
 #pragma mark -
-
+#pragma mark Method's Code Modifications
+    
+    /******************************************************
+     *
+     *  The convention for bytecodes instruction is:
+     *  add_<instructionName>(args);
+     *  
+     *  As much as possible, if <instructionName> depends
+     *  On an index of a data in the Constant Pool, then
+     *  two versions should be available: 1. args are all
+     *  the arguments required for adding the data into the CP
+     *  2. args is the index of the data in the CP
+     *
+     *****************************************************/
+    
+    /******************************************************
+     * Adds a getstatic bytecode instruction
+     * to the method at 'methodIndex'
+     * For the field with name 'fieldName'
+     * The field type given by 'fieldType'
+     * And the class name given by 'className'
+     * If className is NULL, the name of the current class is used
+     * Push all the required data into the CP
+     * The instruction is put at the byte with index byteIndex
+     * This instruction calls addStaticFieldRef method
+     *****************************************************/
+    
+    void add_getstatic(unsigned short   methodIndex,
+                       unsigned short   instOffset,
+                       const char       *fieldName,
+                       const char       *fieldType,
+                       const char       *className);
+    
+    void add_getstatic(unsigned short   methodIndex,
+                       unsigned short   instOffset,
+                       unsigned short   cpIndexOfData);
+    
+    
+    /******************************************************
+     * Adds an invokestatic bytecode instruction
+     * to the method at 'methodIndex'
+     * To the method with name 'methodName'
+     * 'methodSignature' is the signature of the method
+     * And the class name given by 'className'
+     * If className is NULL, the name of the current class is used
+     * Push all the required data into the CP
+     * The instruction is put at the byte with index byteIndex
+     * This instruction calls addMethoddRef method
+     *****************************************************/
+    
+    void add_invokestatic(unsigned short    methodIndex,
+                          unsigned short    instOffset,
+                          const char        *methodName,
+                          const char        *methodSignature,
+                          const char        *className);
+    
+    void add_invokestatic(unsigned short    methodIndex,
+                          unsigned short    instOffset,
+                          unsigned short    cpIndexOfData);
+    
+    
+    
+#pragma mark -
     
 #pragma mark Static methods
 public:

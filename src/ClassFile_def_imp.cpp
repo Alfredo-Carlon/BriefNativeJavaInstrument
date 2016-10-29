@@ -42,7 +42,11 @@ void u2::writeToFile(void *file_ptr)
 {
     fwrite(u, sizeof(u1), 2, (FILE *)file_ptr);
 }
-
+void u2::writeToArray(unsigned char *bytecodeArray)
+{
+    bytecodeArray[0] = u[0];
+    bytecodeArray[1] = u[1];
+}
 #pragma mark -
 
 u4::u4()
@@ -76,6 +80,13 @@ void u4::writeToFile(void *file_ptr)
     fwrite(u, sizeof(u1), 4, (FILE *)file_ptr);
 }
 
+void u4::writeToArray(unsigned char *bytecodeArray)
+{
+    bytecodeArray[0] = u[0];
+    bytecodeArray[1] = u[1];
+    bytecodeArray[2] = u[2];
+    bytecodeArray[3] = u[3];
+}
 #pragma mark -
 
 #pragma mark cp_info struct
@@ -331,12 +342,20 @@ CONSTANT_Class_info::CONSTANT_Class_info(const CONSTANT_Class_info& cpy)
 {
     name_index = cpy.name_index;
 }
+CONSTANT_Class_info::CONSTANT_Class_info(u2 index)
+{
+    name_index = index;
+}
 void CONSTANT_Class_info::writeToFile(void *file_ptr)
 {
     name_index.writeToFile(file_ptr);
 }
 #pragma mark -
-
+CONSTANT_Fieldref_info::CONSTANT_Fieldref_info()
+{
+    class_index = (unsigned short)0;
+    name_and_type_index = (unsigned short)0;
+}
 CONSTANT_Fieldref_info::CONSTANT_Fieldref_info(unsigned char *bytecode)
 {
     class_index = u2(bytecode);
@@ -354,7 +373,11 @@ void CONSTANT_Fieldref_info::writeToFile(void *file_ptr)
     name_and_type_index.writeToFile(file_ptr);
 }
 #pragma mark -
-
+CONSTANT_Methodref_info::CONSTANT_Methodref_info()
+{
+    class_index         = u2((unsigned short)0);
+    name_and_type_index = u2((unsigned short)0);
+}
 CONSTANT_Methodref_info::CONSTANT_Methodref_info(unsigned char *bytecode)
 {
     class_index = u2(bytecode);
@@ -414,6 +437,10 @@ CONSTANT_Integer_info::CONSTANT_Integer_info(const CONSTANT_Integer_info& cpy)
 {
     bytes = cpy.bytes;
 }
+CONSTANT_Integer_info::CONSTANT_Integer_info(u4 integer)
+{
+    bytes = integer;
+}
 void CONSTANT_Integer_info::writeToFile(void *file_ptr)
 {
     bytes.writeToFile(file_ptr);
@@ -472,6 +499,11 @@ void CONSTANT_Double_info::writeToFile(void *file_ptr)
 }
 #pragma mark -
 
+CONSTANT_NameAndType_info::CONSTANT_NameAndType_info()
+{
+    name_index          = u2((unsigned short)0);
+    descriptor_index    = u2((unsigned short)0);
+}
 CONSTANT_NameAndType_info::CONSTANT_NameAndType_info(unsigned char *bytecode)
 {
     name_index          = u2(bytecode);

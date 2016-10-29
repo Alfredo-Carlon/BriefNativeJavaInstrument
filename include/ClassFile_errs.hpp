@@ -86,4 +86,17 @@ class UnexpectedDataTypeAtConstantPoolIndex{};
 #pragma mark InvalidFilenameToDumpBytecode
 class InvalidFilenameToDumpBytecode{};
 #pragma mark -
+/**********************************************************
+ *                  Invalid method index                  *
+ **********************************************************/
+#pragma mark InvalidFilenameToDumpBytecode
+class InvalidMethodIndex{};
+#pragma mark -
+/**********************************************************
+ *                Invalid instruction offset              *
+ **********************************************************/
+#pragma mark InvalidInstructionOffset
+class InvalidInstructionOffset{};
+#pragma mark -
+
 #endif /* ClassFile_errs_h */

@@ -38,6 +38,7 @@ typedef struct __attribute__((__packed__)) u2 { u1 u[2];
     
     void writeToFile(void *file_ptr);
     
+    void writeToArray(unsigned char *bytecodeArray);
     
     inline unsigned short uShort() const{
         return (unsigned short)
@@ -60,6 +61,12 @@ typedef struct __attribute__((__packed__)) u2 { u1 u[2];
     {
         u[0] |= rs.u[0];
         u[1] |= rs.u[1];
+    }
+    inline void operator += (const u2& rs)
+    {
+        u2 res(this ->uShort() + rs.uShort());
+        u[0] = res.u[0];
+        u[1] = res.u[1];
     }
     
     
@@ -93,6 +100,8 @@ typedef struct __attribute__((__packed__)) u4 { u1 u[4];
     
     void writeToFile(void *file_ptr);
     
+    void writeToArray(unsigned char *bytecodeArray);
+    
     inline unsigned int uInt() const
     {
         return (unsigned int)
@@ -114,6 +123,15 @@ typedef struct __attribute__((__packed__)) u4 { u1 u[4];
     inline bool operator!=(const u4& rs) const
     {
         return !(*this == rs);
+    }
+    
+    inline void operator += (const u4& rs)
+    {
+        u4 res(this ->uInt() + rs.uInt());
+        u[0] = res.u[0];
+        u[1] = res.u[1];
+        u[2] = res.u[2];
+        u[3] = res.u[3];
     }
     
     inline operator unsigned int() const
@@ -256,6 +274,7 @@ typedef struct CONSTANT_Class_info
     u2 name_index;
     CONSTANT_Class_info(unsigned char *bytecode);
     CONSTANT_Class_info(const CONSTANT_Class_info& cpy);
+    CONSTANT_Class_info(u2 index);
     void writeToFile(void *file_ptr);
     static inline unsigned int size()
     {
@@ -267,6 +286,7 @@ typedef struct CONSTANT_Fieldref_info
 {
     u2 class_index;
     u2 name_and_type_index;
+    CONSTANT_Fieldref_info();
     CONSTANT_Fieldref_info(unsigned char *bytecode);
     CONSTANT_Fieldref_info(const CONSTANT_Fieldref_info& cpy);
     void writeToFile(void *file_ptr);
@@ -280,6 +300,7 @@ typedef struct CONSTANT_Methodref_info
 {
     u2 class_index;
     u2 name_and_type_index;
+    CONSTANT_Methodref_info();
     CONSTANT_Methodref_info(unsigned char *bytecode);
     CONSTANT_Methodref_info(const CONSTANT_Methodref_info& cpy);
     void writeToFile(void *file_ptr);
@@ -321,6 +342,7 @@ typedef struct CONSTANT_Integer_info
     u4 bytes;
     CONSTANT_Integer_info(unsigned char *bytecode);
     CONSTANT_Integer_info(const CONSTANT_Integer_info& cpy);
+    CONSTANT_Integer_info(u4 integer);
     void writeToFile(void *file_ptr);
     static inline unsigned int size()
     {
@@ -371,6 +393,7 @@ typedef struct CONSTANT_NameAndType_info
 {
     u2 name_index;
     u2 descriptor_index;
+    CONSTANT_NameAndType_info();
     CONSTANT_NameAndType_info(unsigned char *bytecode);
     CONSTANT_NameAndType_info(const CONSTANT_NameAndType_info& cpy);
     void writeToFile(void *file_ptr);
