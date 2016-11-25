@@ -227,7 +227,7 @@ void ObjCreationHistory::writeLogToFile(const char *filename)
     FILE *out = fopen(filename, "w");
     
     uint32_t numberOfEvents = _loadingEvents ->size();
-    for(uint32_t i=0; i != _validEntriesCount; i++){
+    for(uint32_t i=0; i != _validEntriesCount+1; i++){
         numberOfEvents += _entriesForThreads[i].tags ->size();
     }
     
@@ -248,8 +248,8 @@ void ObjCreationHistory::writeLogToFile(const char *filename)
         eventIndex++;
     }
     fprintf(out, "Number of loaded classes: %u\n", eventIndex);
-    fprintf(out, "Number of threads %u\n", _validEntriesCount);
-    for(uint32_t i=0; i != _validEntriesCount; i++){
+    fprintf(out, "Number of threads %u\n", _validEntriesCount+1);
+    for(uint32_t i=0; i != _validEntriesCount+1; i++){
         std::vector<std::pair<uint32_t, uint32_t> >::iterator entries_it =
         _entriesForThreads[i].tags ->begin();
         uint32_t constCalled = 0;
@@ -273,45 +273,23 @@ void ObjCreationHistory::writeLogToFile(const char *filename)
         
     }
     fprintf(out, "\n----------------Events List----------------\n");
+    fprintf(out, "CL = Class Loaded\nOC = Object Created\nCC = Constructor Called\n\n");
     //Now sort all the events according to the timestamp
     qsort(events, numberOfEvents, sizeof(struct _logByTimeEntry),
           ObjCreationHistory::eventsCMP);
     
-    struct _threadPrintInfo
-    {
-        uint64_t threadId;
-        uint32_t constructorsCalled;
-        uint32_t objectsCreated;
-        uint32_t firstAction;
-        uint32_t lastAction;
-    };
-    struct _threadPrintInfo *_threadPrint = (struct _threadPrintInfo *)
-    malloc(sizeof(struct _threadPrintInfo)*_validEntriesCount);
-    
-    for(uint32_t i=0; i != _validEntriesCount; i++){
-        _threadPrint[i].threadId = _entriesForThreads[i].threadId;
-        _threadPrint[i].constructorsCalled = 0;
-        _threadPrint[i].objectsCreated = 0;
-    }
-    //Write the file
-    //Write the header
-    short columSize = 15;
-    char *padding = (char *)malloc(columSize+1);
-    memset(padding, ' ', columSize);
-    padding[columSize] = 0;
     char stringBuff[100];
-    
     for(uint32_t i=0; i != numberOfEvents; i++){
         if(events[i].type == ClassLoading)
         {
-            sprintf(stringBuff,"%u %llx CL %u\n",
+            sprintf(stringBuff,"%u 0x%llx CL %u\n",
                     events[i].timestamp,events[i].threadId,events[i].classTag);
         }else{
             if(events[i].classTag == 0){
-                sprintf(stringBuff,"%u %llx OC\n",
+                sprintf(stringBuff,"%u 0x%llx OC\n",
                         events[i].timestamp,events[i].threadId);
             }else{
-                sprintf(stringBuff,"%u %llx CC %u\n",
+                sprintf(stringBuff,"%u 0x%llx CC %u\n",
                         events[i].timestamp,events[i].threadId,
                         events[i].classTag);
             }
@@ -320,8 +298,6 @@ void ObjCreationHistory::writeLogToFile(const char *filename)
     }
     
     fclose(out);
-    free(padding);
     free(events);
-    free(_threadPrint);
 }
 

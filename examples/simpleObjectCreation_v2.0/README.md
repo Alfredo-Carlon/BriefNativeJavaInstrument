@@ -1,7 +1,7 @@
-#simpleObjectCreation_v3.0
+#simpleObjectCreation_v2.0
 
 This example is a kind of Hello World example of bytecode instrumentation.
-It reports every call to a constructor of a loaded class.
+It reports every call to a constructor of a loaded class and tagged class.
 
 Compile/Run:
 	To Compile the example just run
@@ -21,6 +21,12 @@ Notes:
 	pointer sent to say_hello. This may not be accurate because two threads
 	may share the same JNIEnv address if one executes after the other's deallocation.
 	
+	For the momment anonymous and reflection generated classes are not tagged.
+	It seems the tagging strategy does not work with this type of classes.
+	However the calling to sayHello does work if performed without a tag.
 	
+	At the end the native agent writes a file with the recorded actions.
+
+	For more interesting outputs, DaCapo test suite can be instrumented :)
 
 	
