@@ -16,7 +16,6 @@
  */
 
 #pragma mark NoMagicNumber
-
 /**********************************************************
  *           Thrown when no magic number match            *
  **********************************************************/
@@ -97,6 +96,12 @@ class InvalidMethodIndex{};
  **********************************************************/
 #pragma mark InvalidInstructionOffset
 class InvalidInstructionOffset{};
+#pragma mark -
+/**********************************************************
+ *                Invalid buffer size                     *
+ **********************************************************/
+#pragma mark InvalidOutputBufferSize
+class InvalidOutputBufferSize{};
 #pragma mark -
 
 #endif /* ClassFile_errs_h */

@@ -21,6 +21,10 @@ void JNICALL
 nPA_VMStart(jvmtiEnv *,
             JNIEnv* );
 
+void JNICALL
+nPA_VMDeath(jvmtiEnv *jvmti_env,
+            JNIEnv* jni_env);
+
 
 StaticClassTagger *tagger;
 
@@ -57,12 +61,20 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
         printf("VMStart enabled\n");
     }
     
+    retCode = jvmti -> SetEventNotificationMode(JVMTI_ENABLE,
+                                                JVMTI_EVENT_VM_DEATH,
+                                                NULL);
+    if(retCode == JVMTI_ERROR_NONE){
+        printf("VMDeath enabled\n");
+    }
+    
     
     jvmtiEventCallbacks callbacks;
     memset(&callbacks,0, sizeof(callbacks));
     
     callbacks.ClassFileLoadHook = &nPA_ClassFileLoadHook;
     callbacks.VMStart = &nPA_VMStart;
+    callbacks.VMDeath = &nPA_VMDeath;
     retCode = jvmti->SetEventCallbacks(&callbacks, (jint)sizeof(callbacks));
     if(retCode == JVMTI_ERROR_NONE){
         printf("ClassFileLoadHook loaded\n");
@@ -84,6 +96,11 @@ nPA_ClassFileLoadHook(jvmtiEnv *jvmti_env,
                       unsigned char** new_class_data)
 {
     try {
+        //Write as last loaded
+        FILE *fptr = fopen("lastLoaded.class", "w");
+        fwrite(class_data, sizeof(unsigned char), class_data_len, fptr);
+        fclose(fptr);
+        
         tagger ->loadClass(class_data, class_data_len,name);
         if(!tagger ->canTagClass())
             return;
@@ -100,6 +117,10 @@ nPA_ClassFileLoadHook(jvmtiEnv *jvmti_env,
                  new_class_data);
         tagger ->dumpBytecodeToArray(*new_class_data, *new_class_data_len);
         
+        
+        fptr = fopen("MlastLoaded.class", "w");
+        fwrite(*new_class_data, sizeof(unsigned char), *new_class_data_len, fptr);
+        fclose(fptr);
         
     } catch (InvalidMethodIndex e) {
         //Dump the data of the class to disk.
@@ -121,7 +142,7 @@ void JNICALL
 nPA_VMStart(jvmtiEnv *jvmti_env,
         JNIEnv* jni_env)
 {
-    printf("To register natives\n");
+    printf("Registering natives\n");
     //Register the native method for Object Class
     JNINativeMethod sayHelloRegister;
     sayHelloRegister.name       = (char *)"sayHello";
@@ -131,7 +152,6 @@ nPA_VMStart(jvmtiEnv *jvmti_env,
     
     //Get the jclass for Object
     jclass ObjectClass = jni_env ->FindClass("java/lang/Object");
-    printf("Object class %p\n", ObjectClass);
     jint ret = jni_env ->RegisterNatives(ObjectClass,&sayHelloRegister,1);
     if(!ret){
         printf("\n\n\n\n#######################\n\n\n\n");
@@ -139,4 +159,11 @@ nPA_VMStart(jvmtiEnv *jvmti_env,
         printf("Error code: %d\n", ret);
     }
     
+}
+
+void JNICALL
+nPA_VMDeath(jvmtiEnv *jvmti_env,
+        JNIEnv* jni_env)
+{
+    Java_java_lang_Object_sayHello(jni_env, NULL, -1);
 }

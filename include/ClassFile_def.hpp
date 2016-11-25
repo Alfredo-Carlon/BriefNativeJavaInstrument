@@ -38,7 +38,7 @@ typedef struct __attribute__((__packed__)) u2 { u1 u[2];
     
     void writeToFile(void *file_ptr);
     
-    void writeToArray(unsigned char *bytecodeArray);
+    unsigned char *writeToArray(unsigned char *bytecodeArray);
     
     inline unsigned short uShort() const{
         return (unsigned short)
@@ -100,7 +100,7 @@ typedef struct __attribute__((__packed__)) u4 { u1 u[4];
     
     void writeToFile(void *file_ptr);
     
-    void writeToArray(unsigned char *bytecodeArray);
+    unsigned char *writeToArray(unsigned char *bytecodeArray);
     
     inline unsigned int uInt() const
     {
@@ -170,7 +170,9 @@ typedef struct attribute_info
     attribute_info();
     attribute_info(const attribute_info& cpy);
     attribute_info & operator= (const attribute_info& rs);
+    unsigned int size();
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     ~attribute_info();
 } attribute_info;
 
@@ -186,7 +188,9 @@ typedef struct field_info {
     field_info(const field_info& cpy);
     field_info & operator= (const field_info& rs);
     field_info(u2,u2,u2,u2,attribute_info *);
+    unsigned int size();
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     ~field_info();
     //Adds a new attribute to attributes
     void addNewAttribute(attribute_info newAttr, unsigned short index);
@@ -206,7 +210,9 @@ typedef struct method_info
     method_info(const method_info& cpy);
     method_info & operator= (const method_info& rs);
     method_info(u2,u2,u2,u2,attribute_info *);
+    unsigned int size();
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     ~method_info();
     //Adds a new attribute to attributes
     void addNewAttribute(attribute_info newAttr, unsigned short index);
@@ -272,10 +278,11 @@ const u1 CONSTANT_InvokeDynamic         =   18;
 typedef struct CONSTANT_Class_info
 {
     u2 name_index;
-    CONSTANT_Class_info(unsigned char *bytecode);
+    CONSTANT_Class_info(const unsigned char *bytecode);
     CONSTANT_Class_info(const CONSTANT_Class_info& cpy);
     CONSTANT_Class_info(u2 index);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2);
@@ -287,9 +294,10 @@ typedef struct CONSTANT_Fieldref_info
     u2 class_index;
     u2 name_and_type_index;
     CONSTANT_Fieldref_info();
-    CONSTANT_Fieldref_info(unsigned char *bytecode);
+    CONSTANT_Fieldref_info(const unsigned char *bytecode);
     CONSTANT_Fieldref_info(const CONSTANT_Fieldref_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2)*2;
@@ -301,9 +309,10 @@ typedef struct CONSTANT_Methodref_info
     u2 class_index;
     u2 name_and_type_index;
     CONSTANT_Methodref_info();
-    CONSTANT_Methodref_info(unsigned char *bytecode);
+    CONSTANT_Methodref_info(const unsigned char *bytecode);
     CONSTANT_Methodref_info(const CONSTANT_Methodref_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2)*2;
@@ -314,10 +323,11 @@ typedef struct CONSTANT_InterfaceMethodref_info
 {
     u2 class_index;
     u2 name_and_type_index;
-    CONSTANT_InterfaceMethodref_info(unsigned char *bytecode);
+    CONSTANT_InterfaceMethodref_info(const unsigned char *bytecode);
     CONSTANT_InterfaceMethodref_info(const CONSTANT_InterfaceMethodref_info&
                                      cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2)*2;
@@ -327,9 +337,10 @@ typedef struct CONSTANT_InterfaceMethodref_info
 typedef struct CONSTANT_String_info
 {
     u2 string_index;
-    CONSTANT_String_info(unsigned char *bytecode);
+    CONSTANT_String_info(const unsigned char *bytecode);
     CONSTANT_String_info(const CONSTANT_String_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2);
@@ -340,10 +351,11 @@ typedef struct CONSTANT_String_info
 typedef struct CONSTANT_Integer_info
 {
     u4 bytes;
-    CONSTANT_Integer_info(unsigned char *bytecode);
+    CONSTANT_Integer_info(const unsigned char *bytecode);
     CONSTANT_Integer_info(const CONSTANT_Integer_info& cpy);
     CONSTANT_Integer_info(u4 integer);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u4);
@@ -353,9 +365,10 @@ typedef struct CONSTANT_Integer_info
 typedef struct CONSTANT_Float_info
 {
     u4 bytes;
-    CONSTANT_Float_info(unsigned char *bytecode);
+    CONSTANT_Float_info(const unsigned char *bytecode);
     CONSTANT_Float_info(const CONSTANT_Float_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u4);
@@ -367,9 +380,10 @@ typedef struct CONSTANT_Long_info
     u4 high_bytes;
     u4 low_bytes;
     CONSTANT_Long_info();
-    CONSTANT_Long_info(unsigned char *bytecode);
+    CONSTANT_Long_info(const unsigned char *bytecode);
     CONSTANT_Long_info(const CONSTANT_Long_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u4)*2;
@@ -380,9 +394,10 @@ typedef struct CONSTANT_Double_info
 {
     u4 high_bytes;
     u4 low_bytes;
-    CONSTANT_Double_info(unsigned char *bytecode);
+    CONSTANT_Double_info(const unsigned char *bytecode);
     CONSTANT_Double_info(const CONSTANT_Double_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u4)*2;
@@ -394,9 +409,10 @@ typedef struct CONSTANT_NameAndType_info
     u2 name_index;
     u2 descriptor_index;
     CONSTANT_NameAndType_info();
-    CONSTANT_NameAndType_info(unsigned char *bytecode);
+    CONSTANT_NameAndType_info(const unsigned char *bytecode);
     CONSTANT_NameAndType_info(const CONSTANT_NameAndType_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2)*2;
@@ -408,12 +424,13 @@ typedef struct CONSTANT_Utf8_info
     u2 length;
     u1 *bytes;
     CONSTANT_Utf8_info();
-    CONSTANT_Utf8_info(unsigned char *bytecode);
+    CONSTANT_Utf8_info(const unsigned char *bytecode);
     CONSTANT_Utf8_info(const CONSTANT_Utf8_info& cpy);
     CONSTANT_Utf8_info & operator= (const CONSTANT_Utf8_info& rs);
     CONSTANT_Utf8_info(unsigned short len, const char *string);
     ~CONSTANT_Utf8_info();
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     inline unsigned int size()
     {
         return sizeof(u2) + sizeof(u1)*length;
@@ -425,9 +442,10 @@ typedef struct CONSTANT_MethodHandle_info
     u1 reference_kind;
     u2 reference_index;
     
-    CONSTANT_MethodHandle_info(unsigned char *bytecode);
+    CONSTANT_MethodHandle_info(const unsigned char *bytecode);
     CONSTANT_MethodHandle_info(const CONSTANT_MethodHandle_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2)+sizeof(u1);
@@ -438,9 +456,10 @@ typedef struct CONSTANT_MethodHandle_info
 typedef struct CONSTANT_MethodType_info
 {
     u2 descriptor_index;
-    CONSTANT_MethodType_info(unsigned char *bytecode);
+    CONSTANT_MethodType_info(const unsigned char *bytecode);
     CONSTANT_MethodType_info(const CONSTANT_MethodType_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2);
@@ -452,9 +471,10 @@ typedef struct CONSTANT_InvokeDynamic_info
 {
     u2 bootstrap_method_attr_index;
     u2 name_and_type_index;
-    CONSTANT_InvokeDynamic_info(unsigned char *bytecode);
+    CONSTANT_InvokeDynamic_info(const unsigned char *bytecode);
     CONSTANT_InvokeDynamic_info(const CONSTANT_InvokeDynamic_info& cpy);
     void writeToFile(void *file_ptr);
+    unsigned char *writeToArray(unsigned char *array);
     static inline unsigned int size()
     {
         return sizeof(u2)*2;
@@ -551,5 +571,240 @@ typedef struct StackMapTable_attribute
  *                             End                          *
  ***********************************************************/
 #pragma mark -
+#pragma mark Opcodes definitions
+
+
+/************************************************************
+ *                     Opcodes definitions                  *
+ *                           Start                          *
+ ***********************************************************/
+
+#pragma mark Constants
+const u1 INSTRUCTION_nop        =0x00;
+const u1 INSTRUCTION_aconst_null=0x01;
+const u1 INSTRUCTION_iconst_m1  =0x02;
+const u1 INSTRUCTION_iconst_0   =0x03;
+const u1 INSTRUCTION_iconst_1   =0x04;
+const u1 INSTRUCTION_iconst_2   =0x05;
+const u1 INSTRUCTION_iconst_3   =0x06;
+const u1 INSTRUCTION_iconst_4   =0x07;
+const u1 INSTRUCTION_iconst_5   =0x08;
+const u1 INSTRUCTION_lconst_0   =0x09;
+const u1 INSTRUCTION_lconst_1   =0x0a;
+const u1 INSTRUCTION_fconst_0   =0x0b;
+const u1 INSTRUCTION_fconst_1   =0x0c;
+const u1 INSTRUCTION_fconst_2   =0x0d;
+const u1 INSTRUCTION_dconst_0   =0x0e;
+const u1 INSTRUCTION_dconst_1   =0x0f;
+const u1 INSTRUCTION_bipush     =0x10;
+const u1 INSTRUCTION_sipush     =0x11;
+const u1 INSTRUCTION_ldc        =0x12;
+const u1 INSTRUCTION_ldc_w      =0x13;
+const u1 INSTRUCTION_ldc2_w     =0x14;
+#pragma mark -
+#pragma mark Loads
+const u1 INSTRUCTION_iload  =0x15;
+const u1 INSTRUCTION_lload  =0x16;
+const u1 INSTRUCTION_fload  =0x17;
+const u1 INSTRUCTION_dload  =0x18;
+const u1 INSTRUCTION_aload  =0x19;
+const u1 INSTRUCTION_iload_0=0x1a;
+const u1 INSTRUCTION_iload_1=0x1b;
+const u1 INSTRUCTION_iload_2=0x1c;
+const u1 INSTRUCTION_iload_3=0x1d;
+const u1 INSTRUCTION_lload_0=0x1e;
+const u1 INSTRUCTION_lload_1=0x1f;
+const u1 INSTRUCTION_lload_2=0x20;
+const u1 INSTRUCTION_lload_3=0x21;
+const u1 INSTRUCTION_fload_0=0x22;
+const u1 INSTRUCTION_fload_1=0x23;
+const u1 INSTRUCTION_fload_2=0x24;
+const u1 INSTRUCTION_fload_3=0x25;
+const u1 INSTRUCTION_dload_0=0x26;
+const u1 INSTRUCTION_dload_1=0x27;
+const u1 INSTRUCTION_dload_2=0x28;
+const u1 INSTRUCTION_dload_3=0x29;
+const u1 INSTRUCTION_aload_0=0x2a;
+const u1 INSTRUCTION_aload_1=0x2b;
+const u1 INSTRUCTION_aload_2=0x2c;
+const u1 INSTRUCTION_aload_3=0x2d;
+const u1 INSTRUCTION_iaload =0x2e;
+const u1 INSTRUCTION_laload =0x2f;
+const u1 INSTRUCTION_faload =0x30;
+const u1 INSTRUCTION_daload =0x31;
+const u1 INSTRUCTION_aaload =0x32;
+const u1 INSTRUCTION_baload =0x33;
+const u1 INSTRUCTION_caload =0x34;
+const u1 INSTRUCTION_saload =0x35;
+#pragma mark -
+#pragma mark Stores
+const u1 INSTRUCTION_istore     =0x36;
+const u1 INSTRUCTION_lstore     =0x37;
+const u1 INSTRUCTION_fstore     =0x38;
+const u1 INSTRUCTION_dstore     =0x39;
+const u1 INSTRUCTION_astore     =0x3a;
+const u1 INSTRUCTION_istore_0   =0x3b;
+const u1 INSTRUCTION_istore_1   =0x3c;
+const u1 INSTRUCTION_istore_2   =0x3d;
+const u1 INSTRUCTION_istore_3   =0x3e;
+const u1 INSTRUCTION_lstore_0   =0x3f;
+const u1 INSTRUCTION_lstore_1   =0x40;
+const u1 INSTRUCTION_lstore_2   =0x41;
+const u1 INSTRUCTION_lstore_3   =0x42;
+const u1 INSTRUCTION_fstore_0   =0x43;
+const u1 INSTRUCTION_fstore_1   =0x44;
+const u1 INSTRUCTION_fstore_2   =0x45;
+const u1 INSTRUCTION_fstore_3   =0x46;
+const u1 INSTRUCTION_dstore_0   =0x47;
+const u1 INSTRUCTION_dstore_1   =0x48;
+const u1 INSTRUCTION_dstore_2   =0x49;
+const u1 INSTRUCTION_dstore_3   =0x4a;
+const u1 INSTRUCTION_astore_0   =0x4b;
+const u1 INSTRUCTION_astore_1   =0x4c;
+const u1 INSTRUCTION_astore_2   =0x4d;
+const u1 INSTRUCTION_astore_3   =0x4e;
+const u1 INSTRUCTION_iastore    =0x4f;
+const u1 INSTRUCTION_lastore    =0x50;
+const u1 INSTRUCTION_fastore    =0x51;
+const u1 INSTRUCTION_dastore    =0x52;
+const u1 INSTRUCTION_aastore    =0x53;
+const u1 INSTRUCTION_bastore    =0x54;
+const u1 INSTRUCTION_castore    =0x55;
+const u1 INSTRUCTION_sastore    =0x56;
+#pragma mark -
+#pragma mark Stack
+const u1 INSTRUCTION_pop    =0x57;
+const u1 INSTRUCTION_pop2   =0x58;
+const u1 INSTRUCTION_dup    =0x59;
+const u1 INSTRUCTION_dup_x1 =0x5a;
+const u1 INSTRUCTION_dup_x2 =0x5b;
+const u1 INSTRUCTION_dup2   =0x5c;
+const u1 INSTRUCTION_dup2_x1=0x5d;
+const u1 INSTRUCTION_dup2_x2=0x5e;
+const u1 INSTRUCTION_swap   =0x5f;
+#pragma mark -
+#pragma mark Math
+const u1 INSTRUCTION_iadd   =0x60;
+const u1 INSTRUCTION_ladd   =0x61;
+const u1 INSTRUCTION_fadd   =0x62;
+const u1 INSTRUCTION_dadd   =0x63;
+const u1 INSTRUCTION_isub   =0x64;
+const u1 INSTRUCTION_lsub   =0x65;
+const u1 INSTRUCTION_fsub   =0x66;
+const u1 INSTRUCTION_dsub   =0x67;
+const u1 INSTRUCTION_imul   =0x68;
+const u1 INSTRUCTION_lmul   =0x69;
+const u1 INSTRUCTION_fmul   =0x6a;
+const u1 INSTRUCTION_dmul   =0x6b;
+const u1 INSTRUCTION_idiv   =0x6c;
+const u1 INSTRUCTION_ldiv   =0x6d;
+const u1 INSTRUCTION_fdiv   =0x6e;
+const u1 INSTRUCTION_ddiv   =0x6f;
+const u1 INSTRUCTION_irem   =0x70;
+const u1 INSTRUCTION_lrem   =0x71;
+const u1 INSTRUCTION_frem   =0x72;
+const u1 INSTRUCTION_drem   =0x73;
+const u1 INSTRUCTION_ineg   =0x74;
+const u1 INSTRUCTION_lneg   =0x75;
+const u1 INSTRUCTION_fneg   =0x76;
+const u1 INSTRUCTION_dneg   =0x77;
+const u1 INSTRUCTION_ishl   =0x78;
+const u1 INSTRUCTION_lshl   =0x79;
+const u1 INSTRUCTION_ishr   =0x7a;
+const u1 INSTRUCTION_lshr   =0x7b;
+const u1 INSTRUCTION_iushr  =0x7c;
+const u1 INSTRUCTION_lushr  =0x7d;
+const u1 INSTRUCTION_iand   =0x7e;
+const u1 INSTRUCTION_land   =0x7f;
+const u1 INSTRUCTION_ior    =0x80;
+const u1 INSTRUCTION_lor    =0x81;
+const u1 INSTRUCTION_ixor   =0x82;
+const u1 INSTRUCTION_lxor   =0x83;
+const u1 INSTRUCTION_iinc   =0x84;
+#pragma mark -
+#pragma mark Conversions
+const u1 INSTRUCTION_i2l=0x85;
+const u1 INSTRUCTION_i2f=0x86;
+const u1 INSTRUCTION_i2d=0x87;
+const u1 INSTRUCTION_l2i=0x88;
+const u1 INSTRUCTION_l2f=0x89;
+const u1 INSTRUCTION_l2d=0x8a;
+const u1 INSTRUCTION_f2i=0x8b;
+const u1 INSTRUCTION_f2l=0x8c;
+const u1 INSTRUCTION_f2d=0x8d;
+const u1 INSTRUCTION_d2i=0x8e;
+const u1 INSTRUCTION_d2l=0x8f;
+const u1 INSTRUCTION_d2f=0x90;
+const u1 INSTRUCTION_i2b=0x91;
+const u1 INSTRUCTION_i2c=0x92;
+const u1 INSTRUCTION_i2s=0x93;
+#pragma mark -
+#pragma mark Comparisons
+const u1 INSTRUCTION_lcmp       =0x94;
+const u1 INSTRUCTION_fcmpl      =0x95;
+const u1 INSTRUCTION_fcmpg      =0x96;
+const u1 INSTRUCTION_dcmpl      =0x97;
+const u1 INSTRUCTION_dcmpg      =0x98;
+const u1 INSTRUCTION_ifeq       =0x99;
+const u1 INSTRUCTION_ifne       =0x9a;
+const u1 INSTRUCTION_iflt       =0x9b;
+const u1 INSTRUCTION_ifge       =0x9c;
+const u1 INSTRUCTION_ifgt       =0x9d;
+const u1 INSTRUCTION_ifle       =0x9e;
+const u1 INSTRUCTION_if_icmpeq  =0x9f;
+const u1 INSTRUCTION_if_icmpne  =0xa0;
+const u1 INSTRUCTION_if_icmplt  =0xa1;
+const u1 INSTRUCTION_if_icmpge  =0xa2;
+const u1 INSTRUCTION_if_icmpgt  =0xa3;
+const u1 INSTRUCTION_if_icmple  =0xa4;
+const u1 INSTRUCTION_if_acmpeq  =0xa5;
+const u1 INSTRUCTION_if_acmpne  =0xa6;
+#pragma mark -
+#pragma mark Control
+const u1 INSTRUCTION_goto           =0xa7;
+const u1 INSTRUCTION_jsr            =0xa8;
+const u1 INSTRUCTION_ret            =0xa9;
+const u1 INSTRUCTION_tableswitch    =0xaa;
+const u1 INSTRUCTION_lookupswitch   =0xab;
+const u1 INSTRUCTION_ireturn        =0xac;
+const u1 INSTRUCTION_lreturn        =0xad;
+const u1 INSTRUCTION_freturn        =0xae;
+const u1 INSTRUCTION_dreturn        =0xaf;
+const u1 INSTRUCTION_areturn        =0xb0;
+const u1 INSTRUCTION_return         =0xb1;
+#pragma mark -
+#pragma mark References
+const u1 INSTRUCTION_getstatic          =0xb2;
+const u1 INSTRUCTION_putstatic          =0xb3;
+const u1 INSTRUCTION_getfield           =0xb4;
+const u1 INSTRUCTION_putfield           =0xb5;
+const u1 INSTRUCTION_invokevirtual      =0xb6;
+const u1 INSTRUCTION_invokespecial      =0xb7;
+const u1 INSTRUCTION_invokestatic       =0xb8;
+const u1 INSTRUCTION_invokeinterface    =0xb9;
+const u1 INSTRUCTION_invokedynamic      =0xba;
+const u1 INSTRUCTION_new                =0xbb;
+const u1 INSTRUCTION_newarray           =0xbc;
+const u1 INSTRUCTION_anewarray          =0xbd;
+const u1 INSTRUCTION_arraylength        =0xbe;
+const u1 INSTRUCTION_athow              =0xbf;
+const u1 INSTRUCTION_checkcast          =0xc0;
+const u1 INSTRUCTION_instanceof         =0xc1;
+const u1 INSTRUCTION_monitorenter       =0xc2;
+const u1 INSTRUCTION_monitorexit        =0xc3;
+#pragma mark -
+#pragma mark Extended
+const u1 INSTRUCTION_wide           =0xc4;
+const u1 INSTRUCTION_multianewarray =0xc5;
+const u1 INSTRUCTION_ifnull         =0xc6;
+const u1 INSTRUCTION_ifnonnull      =0xc7;
+const u1 INSTRUCTION_goto_w         =0xc8;
+const u1 INSTRUCTION_jsr_w          =0xc9;
+#pragma mark -
+/************************************************************
+ *                     Opcodes definitions                  *
+ *                            End                           *
+ ***********************************************************/
+
 
 #endif /* class_file_defs_h */

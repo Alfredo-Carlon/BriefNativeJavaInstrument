@@ -10,6 +10,8 @@
 #define ClassFile_FirstParser_hpp
 
 #include <ClassFile_def.hpp>
+#include <CodeMod_def.hpp>
+#include <unordered_map>
 
 /**
  * First 'quick intended' interface for reading and parsing
@@ -40,6 +42,12 @@ private:
     //Holds the size in bytes of the current bytecode
     unsigned long _size_in_bytes;
     
+    //Array for modified versions of methods
+    CodeMod *_modifiedMethods;
+    
+    //Size of modifiedMethods
+    unsigned int _modifiedMethodsSize;
+    
     //Fill the field_info & method_info structures array
     //structures.
     //fi        is a pointer to a field_info array
@@ -68,7 +76,11 @@ private:
     //Looks if a given Utf8 CP index matches the given name
     bool _cpEntryMatches(unsigned short entry, const char *str);
     
+    //Loads an original method's code version into _modifiedMethods
+    void _loadCodeModForMethod(unsigned short methodIndex);
     
+    //Saves the modified versions of methods back to the methods array
+    void _saveCodeModeForAllMethods();
 public:
     
     //Default constructor
@@ -80,10 +92,13 @@ public:
     //Load the bytecode into _classFile
     //payload       is a pointer to the bytecode
     //payloadSize   is the size in bytes of the bytecode
-    void loadBytecode(unsigned char *payload, unsigned int payloadSize);
+    void loadBytecode(const unsigned char *payload, unsigned int payloadSize);
     
     //Dumps the bytecode to disk at 'filename'
     void dumpBytecode(const char *filename);
+    
+    //Dumps the bytecode to the buffer
+    void dumpBytecodeToBuffer(unsigned char *buffer, unsigned long length);
     
     //Sets the name of the class for the bytecode
     void setClassName(const char *name);
@@ -104,6 +119,9 @@ public:
     //Returns the number of attributes
     //Declared in _classFile
     unsigned int attributesSize();
+    
+    //Returns the current bytecode's size
+    unsigned long bytecodeSize();
     
     
     
@@ -187,6 +205,50 @@ public:
      *  2. args is the index of the data in the CP
      *
      *****************************************************/
+private:
+    
+    /******************************************************
+     *
+     * Method that inserts an opcode and a CP index into
+     * the bytecode.
+     * methodIndex      - The index of the method.
+     * instOffset       - The offset byte in the method's bytecode
+     * cpIndexOfData    - The index in the Constant Pool
+     * opcode           - The opcode to insert
+     *
+     ******************************************************/
+    void insert_opcode(unsigned short   methodIndex,
+                       unsigned short   instOffset,
+                       unsigned short   cpIndexOfData,
+                       u1 opcode);
+    
+    /******************************************************
+     *
+     * Shifts the exception table's indices by the amount
+     * of given bytes
+     *
+     * codeAttribPtr    - A pointer to the exception_table_length
+     *                    and the exception table itself.
+     * amount           - The amount of bytes to add to the
+     *                    indices in the exception tables
+     *
+     ******************************************************/
+    void shiftExceptionTable(u1 *codeAttribPtr, unsigned char amount);
+    
+public:
+
+    
+    /******************************************************
+     * Adds a aload_n instruction into the bytecode
+     * at the offset 'instOffset'
+     *
+     *****************************************************/
+    
+    void add_aload_n(unsigned short methodIndex,
+                     unsigned short instOffset,
+                     u1 index);
+    
+    
     
     /******************************************************
      * Adds a getstatic bytecode instruction
@@ -287,6 +349,8 @@ private:
     //Else it belongs to a field
     static const char *_accessModifiersToString(bool method,u2 access_flags)
     {
+        if(access_flags == u2((unsigned short)0))
+            return NULL;
         char *flags[14];
         bzero(flags, sizeof(char *)*14);
         unsigned char index = 0; //Next free index in flags
@@ -294,7 +358,7 @@ private:
         if(access_flags & ACC_PUBLIC){
             flags[index] = (char *)malloc(7);
             strcpy(flags[index], "PUBLIC");
-            size += 6;
+            size += 7;
             index++;
         }
         if(access_flags & ACC_PRIVATE)
@@ -384,17 +448,16 @@ private:
             size += 10;
             index++;
         }
-        size++;
         char *retChar = (char *)malloc(size);
         unsigned short offset = 0;
         for(unsigned char i=0; i != 14; i++){
-            if(!flags[i])
-                break;
             strcpy(retChar+offset, flags[i]);
             offset += strlen(flags[i]);
+            if(i != 13 && !flags[i+1])
+                break;
             retChar[offset++] = ',';
         }
-        retChar[offset-1] = 0;
+        retChar[offset] = 0;
         return retChar;
     }
     
@@ -403,6 +466,22 @@ private:
 #pragma mark Printing
 public:
     void printMethodAt(unsigned short index);
+#pragma mark -
+    
+#pragma mark Basic Queries
+    //Returns true if the name of the method at index methodIndex
+    //equals the given 'methodName'. Returns False otherwise
+    bool methodNameEquals(unsigned short methodIndex,
+                          const char *methodName);
+    
+    //Returns true if the class has the argument access_flags
+    //set. False otherwise
+    bool classHasAccess(u2 queryAccessFlags);
+    
+    //Returns true if the method has the argument access_flags
+    //set. False otherwise
+    bool methodHasAccess(unsigned short methodIndex, u2 queryAccessFlags);
+    
     
 #pragma mark -
 };

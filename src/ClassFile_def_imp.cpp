@@ -42,10 +42,11 @@ void u2::writeToFile(void *file_ptr)
 {
     fwrite(u, sizeof(u1), 2, (FILE *)file_ptr);
 }
-void u2::writeToArray(unsigned char *bytecodeArray)
+unsigned char *u2::writeToArray(unsigned char *bytecodeArray)
 {
     bytecodeArray[0] = u[0];
     bytecodeArray[1] = u[1];
+    return bytecodeArray+2;
 }
 #pragma mark -
 
@@ -56,9 +57,9 @@ u4::u4()
 }
 
 u4::u4(unsigned int ui){
-    u[0] = (ui & 0xFF000000) >> 3;
-    u[1] = (ui & 0xFF0000) >> 2;
-    u[2] = (ui & 0xFF00) >> 1;
+    u[0] = (ui & 0xFF000000) >> 24;
+    u[1] = (ui & 0xFF0000) >> 16;
+    u[2] = (ui & 0xFF00) >> 8;
     u[3] = (ui & 0xFF);
 }
 
@@ -80,12 +81,13 @@ void u4::writeToFile(void *file_ptr)
     fwrite(u, sizeof(u1), 4, (FILE *)file_ptr);
 }
 
-void u4::writeToArray(unsigned char *bytecodeArray)
+unsigned char *u4::writeToArray(unsigned char *bytecodeArray)
 {
     bytecodeArray[0] = u[0];
     bytecodeArray[1] = u[1];
     bytecodeArray[2] = u[2];
     bytecodeArray[3] = u[3];
+    return bytecodeArray+4;
 }
 #pragma mark -
 
@@ -320,6 +322,7 @@ cp_info::~cp_info(){
             break;
     }
     info = NULL;
+    _ownsInfoMemory = false;
 }
 #pragma mark -
 
@@ -334,7 +337,7 @@ cp_info::~cp_info(){
  *                     CONSTANT*_info structs                   *
  *                             start                            *
  ****************************************************************/
-CONSTANT_Class_info::CONSTANT_Class_info(unsigned char *bytecode)
+CONSTANT_Class_info::CONSTANT_Class_info(const unsigned char *bytecode)
 {
     name_index = u2(bytecode);
 }
@@ -350,13 +353,17 @@ void CONSTANT_Class_info::writeToFile(void *file_ptr)
 {
     name_index.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_Class_info::writeToArray(unsigned char *array)
+{
+    return name_index.writeToArray(array);
+}
 #pragma mark -
 CONSTANT_Fieldref_info::CONSTANT_Fieldref_info()
 {
     class_index = (unsigned short)0;
     name_and_type_index = (unsigned short)0;
 }
-CONSTANT_Fieldref_info::CONSTANT_Fieldref_info(unsigned char *bytecode)
+CONSTANT_Fieldref_info::CONSTANT_Fieldref_info(const unsigned char *bytecode)
 {
     class_index = u2(bytecode);
     name_and_type_index = u2(bytecode+2);
@@ -372,13 +379,18 @@ void CONSTANT_Fieldref_info::writeToFile(void *file_ptr)
     class_index.writeToFile(file_ptr);
     name_and_type_index.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_Fieldref_info::writeToArray(unsigned char *array)
+{
+    array = class_index.writeToArray(array);
+    return name_and_type_index.writeToArray(array);
+}
 #pragma mark -
 CONSTANT_Methodref_info::CONSTANT_Methodref_info()
 {
     class_index         = u2((unsigned short)0);
     name_and_type_index = u2((unsigned short)0);
 }
-CONSTANT_Methodref_info::CONSTANT_Methodref_info(unsigned char *bytecode)
+CONSTANT_Methodref_info::CONSTANT_Methodref_info(const unsigned char *bytecode)
 {
     class_index = u2(bytecode);
     name_and_type_index = u2(bytecode+2);
@@ -394,10 +406,15 @@ void CONSTANT_Methodref_info::writeToFile(void *file_ptr)
     class_index.writeToFile(file_ptr);
     name_and_type_index.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_Methodref_info::writeToArray(unsigned char *array)
+{
+    array = class_index.writeToArray(array);
+    return name_and_type_index.writeToArray(array);
+}
 #pragma mark -
 
 CONSTANT_InterfaceMethodref_info::
-CONSTANT_InterfaceMethodref_info(unsigned char *bytecode)
+CONSTANT_InterfaceMethodref_info(const unsigned char *bytecode)
 {
     class_index = u2(bytecode);
     name_and_type_index = u2(bytecode+2);
@@ -413,9 +430,15 @@ void CONSTANT_InterfaceMethodref_info::writeToFile(void *file_ptr)
     class_index.writeToFile(file_ptr);
     name_and_type_index.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_InterfaceMethodref_info::writeToArray(
+                                                unsigned char *array)
+{
+    array = class_index.writeToArray(array);
+    return name_and_type_index.writeToArray(array);
+}
 #pragma mark -
 
-CONSTANT_String_info::CONSTANT_String_info(unsigned char *bytecode)
+CONSTANT_String_info::CONSTANT_String_info(const unsigned char *bytecode)
 {
     string_index = u2(bytecode);
 }
@@ -427,9 +450,13 @@ void CONSTANT_String_info::writeToFile(void *file_ptr)
 {
     string_index.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_String_info::writeToArray(unsigned char *array)
+{
+    return string_index.writeToArray(array);
+}
 #pragma mark -
 
-CONSTANT_Integer_info::CONSTANT_Integer_info(unsigned char *bytecode)
+CONSTANT_Integer_info::CONSTANT_Integer_info(const unsigned char *bytecode)
 {
     bytes = u4(bytecode);
 }
@@ -445,9 +472,13 @@ void CONSTANT_Integer_info::writeToFile(void *file_ptr)
 {
     bytes.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_Integer_info::writeToArray(unsigned char *array)
+{
+    return bytes.writeToArray(array);
+}
 #pragma mark -
 
-CONSTANT_Float_info::CONSTANT_Float_info(unsigned char *bytecode)
+CONSTANT_Float_info::CONSTANT_Float_info(const unsigned char *bytecode)
 {
     bytes = u4(bytecode);
 }
@@ -459,13 +490,17 @@ void CONSTANT_Float_info::writeToFile(void *file_ptr)
 {
     bytes.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_Float_info::writeToArray(unsigned char *array)
+{
+    return bytes.writeToArray(array);
+}
 #pragma mark -
 CONSTANT_Long_info::CONSTANT_Long_info()
 {
     high_bytes  = u4((unsigned int)0);
     low_bytes   = u4((unsigned int)0);
 }
-CONSTANT_Long_info::CONSTANT_Long_info(unsigned char *bytecode)
+CONSTANT_Long_info::CONSTANT_Long_info(const unsigned char *bytecode)
 {
     high_bytes  = u4(bytecode);
     low_bytes   = u4(bytecode + 4);
@@ -480,9 +515,14 @@ void CONSTANT_Long_info::writeToFile(void *file_ptr)
     high_bytes.writeToFile(file_ptr);
     low_bytes.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_Long_info::writeToArray(unsigned char *array)
+{
+    array = high_bytes.writeToArray(array);
+    return low_bytes.writeToArray(array);
+}
 #pragma mark -
 
-CONSTANT_Double_info::CONSTANT_Double_info(unsigned char *bytecode)
+CONSTANT_Double_info::CONSTANT_Double_info(const unsigned char *bytecode)
 {
     high_bytes  = u4(bytecode);
     low_bytes   = u4(bytecode + 4);
@@ -497,6 +537,11 @@ void CONSTANT_Double_info::writeToFile(void *file_ptr)
     high_bytes.writeToFile(file_ptr);
     low_bytes.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_Double_info::writeToArray(unsigned char *array)
+{
+    array = high_bytes.writeToArray(array);
+    return low_bytes.writeToArray(array);
+}
 #pragma mark -
 
 CONSTANT_NameAndType_info::CONSTANT_NameAndType_info()
@@ -504,7 +549,8 @@ CONSTANT_NameAndType_info::CONSTANT_NameAndType_info()
     name_index          = u2((unsigned short)0);
     descriptor_index    = u2((unsigned short)0);
 }
-CONSTANT_NameAndType_info::CONSTANT_NameAndType_info(unsigned char *bytecode)
+CONSTANT_NameAndType_info::CONSTANT_NameAndType_info(const
+                                                     unsigned char *bytecode)
 {
     name_index          = u2(bytecode);
     descriptor_index    = u2(bytecode+2);
@@ -520,6 +566,11 @@ void CONSTANT_NameAndType_info::writeToFile(void *file_ptr)
     name_index.writeToFile(file_ptr);
     descriptor_index.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_NameAndType_info::writeToArray(unsigned char *array)
+{
+    array = name_index.writeToArray(array);
+    return descriptor_index.writeToArray(array);
+}
 #pragma mark -
 
 CONSTANT_Utf8_info::CONSTANT_Utf8_info()
@@ -527,7 +578,7 @@ CONSTANT_Utf8_info::CONSTANT_Utf8_info()
     length  = u2((unsigned short)0);
     bytes   = NULL;
 }
-CONSTANT_Utf8_info::CONSTANT_Utf8_info(unsigned char *bytecode)
+CONSTANT_Utf8_info::CONSTANT_Utf8_info(const unsigned char *bytecode)
 {
     length = u2(bytecode);
     bytes = (u1 *)malloc(sizeof(u1)*length);
@@ -567,16 +618,24 @@ CONSTANT_Utf8_info::~CONSTANT_Utf8_info()
 {
     if(bytes != NULL)
         free(bytes);
+    bytes = NULL;
 }
 void CONSTANT_Utf8_info::writeToFile(void *file_ptr)
 {
     length.writeToFile(file_ptr);
     fwrite(bytes, sizeof(u1), length, (FILE *)file_ptr);
 }
+unsigned char *CONSTANT_Utf8_info::writeToArray(unsigned char *array)
+{
+    array = length.writeToArray(array);
+    memcpy(array, bytes, sizeof(u1)*length);
+    return array + length;
+}
 
 #pragma mark -
 
-CONSTANT_MethodHandle_info::CONSTANT_MethodHandle_info(unsigned char *bytecode)
+CONSTANT_MethodHandle_info::CONSTANT_MethodHandle_info(const
+                                                       unsigned char *bytecode)
 {
     reference_kind = *bytecode;
     reference_index = u2(bytecode+1);
@@ -592,8 +651,15 @@ void CONSTANT_MethodHandle_info::writeToFile(void *file_ptr)
     fwrite(&reference_kind, sizeof(u1), 1, (FILE *)file_ptr);
     reference_index.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_MethodHandle_info::writeToArray(unsigned char *array)
+{
+    array[0] = reference_kind;
+    array += 1;
+    return reference_index.writeToArray(array);
+}
 #pragma mark -
-CONSTANT_MethodType_info::CONSTANT_MethodType_info(unsigned char *bytecode)
+CONSTANT_MethodType_info::CONSTANT_MethodType_info(const
+                                                   unsigned char *bytecode)
 {
     descriptor_index = u2(bytecode);
 }
@@ -606,10 +672,14 @@ void CONSTANT_MethodType_info::writeToFile(void *file_ptr)
 {
     descriptor_index.writeToFile(file_ptr);
 }
+unsigned char *CONSTANT_MethodType_info::writeToArray(unsigned char *array)
+{
+    return descriptor_index.writeToArray(array);
+}
 #pragma mark -
 
 CONSTANT_InvokeDynamic_info::
-CONSTANT_InvokeDynamic_info(unsigned char *bytecode)
+CONSTANT_InvokeDynamic_info(const unsigned char *bytecode)
 {
     bootstrap_method_attr_index = u2(bytecode);
     name_and_type_index         = u2(bytecode + 2);
@@ -624,6 +694,11 @@ void CONSTANT_InvokeDynamic_info::writeToFile(void *file_ptr)
 {
     bootstrap_method_attr_index.writeToFile(file_ptr);
     name_and_type_index.writeToFile(file_ptr);
+}
+unsigned char *CONSTANT_InvokeDynamic_info::writeToArray(unsigned char *array)
+{
+    array = bootstrap_method_attr_index.writeToArray(array);
+    return name_and_type_index.writeToArray(array);
 }
 /****************************************************************
  *                     CONSTANT*_info structs                   *
@@ -698,6 +773,14 @@ field_info::field_info(u2 af,u2 ni,u2 di,u2 ac,attribute_info *attrs)
         attributes[i] = attribute_info(attrs[i]);
     }
 }
+unsigned int field_info::size()
+{
+    unsigned int size = sizeof(u2)*4;
+    for(unsigned int i=0; i != attributes_count; i++){
+        size += attributes[i].size();
+    }
+    return size;
+}
 void field_info::writeToFile(void *file_ptr)
 {
     access_flags.writeToFile(file_ptr);
@@ -707,6 +790,17 @@ void field_info::writeToFile(void *file_ptr)
     for(unsigned int i=0; i != attributes_count; i++){
         attributes[i].writeToFile(file_ptr);
     }
+}
+unsigned char *field_info::writeToArray(unsigned char *array)
+{
+    array = access_flags.writeToArray(array);
+    array = name_index.writeToArray(array);
+    array = descriptor_index.writeToArray(array);
+    array = attributes_count.writeToArray(array);
+    for(unsigned int i=0; i != attributes_count; i++){
+        array = attributes[i].writeToArray(array);
+    }
+    return array;
 }
 field_info::~field_info()
 {
@@ -809,6 +903,14 @@ method_info::method_info(u2 af,u2 ni,u2 di,u2 ac,attribute_info *attrs)
         attributes[i] = attribute_info(attrs[i]);
     }
 }
+unsigned int method_info::size()
+{
+    unsigned int size = sizeof(u2)*4;
+    for(unsigned int i=0; i != attributes_count; i++){
+        size += attributes[i].size();
+    }
+    return size;
+}
 void method_info::writeToFile(void *file_ptr)
 {
     access_flags.writeToFile(file_ptr);
@@ -818,6 +920,17 @@ void method_info::writeToFile(void *file_ptr)
     for(unsigned int i=0; i != attributes_count; i++){
         attributes[i].writeToFile(file_ptr);
     }
+}
+unsigned char *method_info::writeToArray(unsigned char *array)
+{
+    array = access_flags.writeToArray(array);
+    array = name_index.writeToArray(array);
+    array = descriptor_index.writeToArray(array);
+    array = attributes_count.writeToArray(array);
+    for(unsigned int i=0; i != attributes_count; i++){
+        array = attributes[i].writeToArray(array);
+    }
+    return array;
 }
 method_info::~method_info()
 {
@@ -894,11 +1007,28 @@ attribute_info & attribute_info::operator= (const attribute_info& rs)
     _ownsInfoMemory = true;
     return *this;
 }
+unsigned int attribute_info::size()
+{
+    unsigned int size = 0;
+    size += sizeof(u2) + sizeof(u4);
+    size += this ->attribute_length.uInt();
+    return size;
+}
 void attribute_info::writeToFile(void *file_ptr)
 {
     attribute_name_index.writeToFile(file_ptr);
     attribute_length.writeToFile(file_ptr);
     fwrite(info, sizeof(u1), attribute_length, (FILE *)file_ptr);
+}
+unsigned char *attribute_info::writeToArray(unsigned char *array)
+{
+    attribute_name_index.writeToArray(array);
+    array += sizeof(u2);
+    attribute_length.writeToArray(array);
+    array += sizeof(u4);
+    memcpy(array, info, sizeof(u1)*attribute_length);
+    array += sizeof(u1)*attribute_length;
+    return array;
 }
 attribute_info::~attribute_info()
 {

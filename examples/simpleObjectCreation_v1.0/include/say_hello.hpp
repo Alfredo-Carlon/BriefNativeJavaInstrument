@@ -6,11 +6,3 @@ extern "C"
     Java_java_lang_Object_sayHello(JNIEnv *env, jobject obj,jlong tag);
 }
 
-
-/*
-extern "C"
-{
-    JNIEXPORT void JNICALL
-    Java_java_lang_Object_sayHello(JNIEnv *env, jobject obj);
-}
-*/
