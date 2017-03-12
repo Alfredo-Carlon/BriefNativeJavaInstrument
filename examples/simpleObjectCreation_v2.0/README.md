@@ -8,7 +8,7 @@ To Compile the example just run
 ```bash
 $make
 ```
-inside the example's root directory (simpleObjectCreation_v2.0). Not that
+inside the example's root directory (simpleObjectCreation_v2.0). Note that
 libBNI.dylib must be already constructed.
 	
 To Run the example:
