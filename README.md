@@ -15,22 +15,22 @@ techniques that allow checking whether a _run_ of a system under scrutiny
 satisfies or violates a given correctness property. 
 
 The goal is to program a 'minimal' instrumentation library. 'Minimal' in the
-following sense: Given a system S, a Java Virtual Machine (JVM) J, a set
-of properties P of S and a set of 'basic actions' A (e.g. function call, object 
+following sense: Given a system _S_, a Java Virtual Machine (JVM) _J_, a set
+of properties _P_ of _S_ and a set of 'basic actions' _A_ (e.g. function call, object 
 creation, variable assignment, basic block execution) required and sufficient
-to observe P. Instrument the execution of S on J (denoted by J->S) 
-such that every action a in A can be observed and sent to an analyzing process 
-to determine if P are satisfied. 
+to observe _P_. Instrument the execution of _S_ on _J_ (denoted by _J->S_) 
+such that every action a in _A_ can be observed and sent to an analyzing process 
+to determine if _P_ are satisfied. 
 
-The difference between A and P is that any property can be divided in two parts:
+The difference between _A_ and _P_ is that any property can be divided in two parts:
 data and processing. The data part is provided by the implementation of the 
-basic actions in A, i.e. the instruments in J->S. The processing part is done
+basic actions in _A_, i.e. the instruments in _J->S_. The processing part is done
 in a separate process.
 
-An example: Suppose we are interested in the property p = 'Every call to a 
-method m of a class C is followed by a call to a method b of a class D'. For
-sake of the argument, suppose m and b are not native. The data part could be
-accomplished by instrumenting the start of m and b:
+An example: Suppose we are interested in the property _p_ = 'Every call to a 
+method _m_ of a class _C_ is followed by a call to a method _b_ of a class _D_'. For
+sake of the argument, suppose _m_ and _b_ are not native. The data part could be
+accomplished by instrumenting the start of _m_ and _b_:
 
 ```
 m: 
@@ -70,7 +70,7 @@ while(1){
 The processing server could be implemented in Java or another language with a
 C++ interface, e.g. Python. 
 
-For the moment, this project will focus on the instrumentation part of J->S.
+For the moment, this project will focus on the instrumentation part of _J->S_.
 
 The current technical restrictions:
 
